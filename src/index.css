@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Painel vidro fosco — combina com fundo cinza */
+.glass-panel {
+  border: 1px solid rgb(255 255 255 / 0.42);
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 0.34) 0%,
+    rgb(255 255 255 / 0.12) 100%
+  );
+  box-shadow:
+    0 1px 1px rgb(255 255 255 / 0.55) inset,
+    0 12px 40px rgb(45 55 72 / 0.12);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
