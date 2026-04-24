@@ -31,8 +31,8 @@ function NavRow({
         [
           'flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
           isActive
-            ? 'border border-white/10 bg-white/[0.1] text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-md'
-            : 'border border-transparent text-zinc-500 hover:text-zinc-300',
+            ? 'border border-zinc-300/80 bg-zinc-200/80 text-zinc-900 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] backdrop-blur-md dark:border-white/10 dark:bg-white/[0.1] dark:text-white dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]'
+            : 'border border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300',
         ].join(' ')
       }
     >
@@ -60,7 +60,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
       inert={drawerInert ? true : undefined}
       className={[
         'flex h-[100dvh] w-[min(17.5rem,88vw)] max-w-[100vw] shrink-0 flex-col',
-        'border-r border-white/[0.06] bg-zinc-950/95 backdrop-blur-xl md:bg-zinc-950/90',
+        'border-r border-zinc-200/80 bg-white/95 backdrop-blur-xl dark:border-white/[0.06] dark:bg-zinc-950/95 md:bg-white/92 md:dark:bg-zinc-950/90',
         'rounded-none md:rounded-tl-3xl',
         'fixed left-0 top-0 z-50 -translate-x-full transition-transform duration-200 ease-out',
         'md:relative md:z-auto md:h-screen md:w-[13.5rem] md:translate-x-0 md:transition-none',
@@ -71,7 +71,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         <div className="flex justify-end">
           <button
             type="button"
-            className="rounded-xl p-2.5 text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200"
+            className="rounded-xl p-2.5 text-zinc-500 transition hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-zinc-200"
             aria-label="Fechar menu"
             onClick={onClose}
           >
@@ -92,7 +92,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
             className={({ isActive }) =>
               [
                 'mb-2 flex shrink-0 cursor-default select-none justify-center rounded-xl px-2 py-2 no-underline transition-colors',
-                isActive ? 'bg-white/[0.08]' : '',
+                isActive ? 'bg-zinc-200/70 dark:bg-white/[0.08]' : '',
               ].join(' ')
             }
           >
@@ -110,7 +110,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           ))}
         </div>
 
-        <div className="mt-2 shrink-0 border-t border-white/[0.06] pt-2">
+        <div className="mt-2 shrink-0 border-t border-zinc-200/70 pt-2 dark:border-white/[0.06]">
           <NavRow item={footerItem} onNavigate={closeIfMobile} />
         </div>
       </nav>

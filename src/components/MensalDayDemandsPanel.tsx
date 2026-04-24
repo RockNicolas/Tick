@@ -136,20 +136,20 @@ export default function MensalDayDemandsPanel({
 
   return (
     <aside
-      className={`flex h-full w-full flex-col rounded-2xl border border-white/10 bg-zinc-950/95 p-4 shadow-2xl ${className ?? ''}`}
+      className={`flex h-full w-full flex-col rounded-2xl border border-zinc-200/90 bg-white/95 p-4 shadow-2xl shadow-zinc-400/20 dark:border-white/10 dark:bg-zinc-950/95 dark:shadow-black/50 ${className ?? ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.2em] text-red-300/90">
+          <p className="text-xs uppercase tracking-[0.2em] text-zinc-900 dark:text-red-300/90">
             Demandas do dia
           </p>
-          <h2 className="mt-1 break-words text-lg font-semibold capitalize text-zinc-100">
+          <h2 className="mt-1 break-words text-lg font-semibold capitalize text-zinc-900 dark:text-zinc-100">
             {dateLabel}
           </h2>
         </div>
         <button
           type="button"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-zinc-300 transition hover:bg-white/10"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-300/80 text-zinc-600 transition hover:bg-black/5 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/10"
           onClick={onClose}
           aria-label="Fechar lateral"
         >
@@ -162,17 +162,17 @@ export default function MensalDayDemandsPanel({
           <button
             type="button"
             onClick={openNewDemand}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/[0.03] px-3 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-zinc-50"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300/80 bg-zinc-50/80 px-3 py-2.5 text-sm font-medium text-zinc-800 transition hover:border-red-400/50 hover:bg-red-50 dark:border-white/20 dark:bg-white/[0.03] dark:text-zinc-200 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 dark:hover:text-zinc-50"
           >
             <Plus className="h-4 w-4 shrink-0 text-red-400" />
             Nova demanda
           </button>
         ) : (
-          <div className="shrink-0 space-y-3 rounded-xl border border-white/10 bg-black/25 p-3">
+          <div className="shrink-0 space-y-3 rounded-xl border border-zinc-200/90 bg-zinc-100/70 p-3 dark:border-white/10 dark:bg-black/25">
             <div>
               <label
                 htmlFor="demand-title"
-                className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500"
               >
                 Título
               </label>
@@ -188,13 +188,13 @@ export default function MensalDayDemandsPanel({
                 }}
                 autoFocus
                 placeholder="Ex.: Revisar layout"
-                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-400/60"
+                className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
               />
             </div>
             <div>
               <label
                 htmlFor="demand-note"
-                className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500"
               >
                 Observação
               </label>
@@ -204,14 +204,14 @@ export default function MensalDayDemandsPanel({
                 onChange={(event) => onNewDemandNoteChange(event.target.value)}
                 rows={3}
                 placeholder="Detalhes, links, contexto..."
-                className="w-full resize-none rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-400/60"
+                className="w-full resize-none rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
               />
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={cancelAdd}
-                className="flex-1 rounded-lg border border-white/15 px-3 py-2 text-sm font-medium text-zinc-300 transition hover:bg-white/10"
+                className="flex-1 rounded-lg border border-zinc-300/80 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-white/15 dark:text-zinc-300 dark:hover:bg-white/10"
               >
                 Cancelar
               </button>
@@ -228,14 +228,14 @@ export default function MensalDayDemandsPanel({
 
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           {demands.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-white/10 p-4 text-sm text-zinc-400">
+            <p className="rounded-lg border border-dashed border-zinc-300/70 p-4 text-sm text-zinc-600 dark:border-white/10 dark:text-zinc-400">
               Nenhuma demanda cadastrada para este dia.
             </p>
           ) : (
             <ul className="space-y-2">
               {demands.map((demand, index) => (
                 <li key={`demand-${index}`}>
-                  <div className="flex items-start gap-2 rounded-xl border border-white/10 bg-black/30 p-2 transition hover:border-red-400/30 hover:bg-black/45">
+                  <div className="flex items-start gap-2 rounded-xl border border-zinc-200/90 bg-white/80 p-2 transition hover:border-red-300/60 hover:bg-red-50/40 dark:border-white/10 dark:bg-black/30 dark:hover:border-red-400/30 dark:hover:bg-black/45">
                     <button
                       type="button"
                       aria-label={
@@ -246,8 +246,8 @@ export default function MensalDayDemandsPanel({
                       onClick={() => onToggleDemandDone(index)}
                       className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${
                         demand.done
-                          ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-200'
-                          : 'border-white/25 bg-black/20 text-transparent hover:border-emerald-400/50'
+                          ? 'border-emerald-600/50 bg-emerald-100/90 text-zinc-900 dark:border-emerald-400/70 dark:bg-emerald-500/20 dark:text-emerald-200'
+                          : 'border-zinc-300/80 bg-zinc-100/80 text-transparent hover:border-emerald-500/50 dark:border-white/25 dark:bg-black/20 dark:hover:border-emerald-400/50'
                       }`}
                     >
                       ✓
@@ -261,8 +261,8 @@ export default function MensalDayDemandsPanel({
                       <p
                         className={`text-sm font-semibold ${
                           demand.done
-                            ? 'text-zinc-400 line-through'
-                            : 'text-zinc-100'
+                            ? 'text-zinc-500 line-through dark:text-zinc-400'
+                            : 'text-zinc-900 dark:text-zinc-100'
                         }`}
                       >
                         {demand.title}
@@ -270,7 +270,9 @@ export default function MensalDayDemandsPanel({
                       {demand.note ? (
                         <p
                           className={`mt-1 max-h-[4.5rem] overflow-hidden whitespace-pre-wrap break-words text-xs leading-relaxed ${
-                            demand.done ? 'text-zinc-500' : 'text-zinc-400'
+                            demand.done
+                              ? 'text-zinc-500 dark:text-zinc-500'
+                              : 'text-zinc-600 dark:text-zinc-400'
                           }`}
                         >
                           {demand.note}
@@ -293,28 +295,28 @@ export default function MensalDayDemandsPanel({
           <button
             type="button"
             aria-label="Fechar edição"
-            className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm dark:bg-black/75"
             onClick={cancelEdit}
           />
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-demand-dialog-title"
-            className="relative z-[101] w-full max-w-lg rounded-2xl border border-white/15 bg-zinc-950 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_80px_rgba(0,0,0,0.65)]"
+            className="relative z-[101] w-full max-w-lg rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-xl shadow-zinc-400/15 dark:border-white/15 dark:bg-zinc-950 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_80px_rgba(0,0,0,0.65)]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p
                   id="edit-demand-dialog-title"
-                  className="text-xs font-medium uppercase tracking-wide text-red-300/90"
+                  className="text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-red-300/90"
                 >
                   Editar demanda
                 </p>
-                <p className="mt-1 truncate text-sm text-zinc-400">{dateLabel}</p>
+                <p className="mt-1 truncate text-sm text-zinc-900 dark:text-zinc-400">{dateLabel}</p>
               </div>
               <button
                 type="button"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-zinc-300 transition hover:bg-white/10"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-300/80 text-zinc-900 transition hover:bg-black/5 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/10"
                 onClick={cancelEdit}
                 aria-label="Fechar"
               >
@@ -326,7 +328,7 @@ export default function MensalDayDemandsPanel({
               <div>
                 <label
                   htmlFor="edit-demand-title"
-                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
                 >
                   Título
                 </label>
@@ -341,13 +343,13 @@ export default function MensalDayDemandsPanel({
                     }
                   }}
                   autoFocus
-                  className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-400/60"
+                  className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
                 />
               </div>
               <div>
                 <label
                   htmlFor="edit-demand-note"
-                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
                 >
                   Observação
                 </label>
@@ -356,14 +358,14 @@ export default function MensalDayDemandsPanel({
                   value={editNote}
                   onChange={(event) => setEditNote(event.target.value)}
                   rows={4}
-                  className="w-full resize-none rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-400/60"
+                  className="w-full resize-none rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
                 />
               </div>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={cancelEdit}
-                  className="flex-1 rounded-lg border border-white/15 px-3 py-2.5 text-sm font-medium text-zinc-300 transition hover:bg-white/10"
+                  className="flex-1 rounded-lg border border-zinc-300/80 px-3 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-zinc-200/80 dark:border-white/15 dark:text-zinc-300 dark:hover:bg-white/10"
                 >
                   Cancelar
                 </button>
@@ -378,7 +380,7 @@ export default function MensalDayDemandsPanel({
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-200 transition hover:bg-red-500/20"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-800/25 bg-red-100/90 px-3 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-red-200/80 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200 dark:hover:bg-red-500/20"
               >
                 <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
                 Excluir demanda

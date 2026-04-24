@@ -10,6 +10,11 @@ import {
 import MensalDayDemandsPanel, {
   type MonthlyDemand,
 } from '../components/MensalDayDemandsPanel'
+import { useTickSettingsVersion } from '../hooks/useTickSettings'
+import {
+  readAutoOpenTodayPanel,
+  readShowClockSeconds,
+} from '../lib/tickSettings'
 
 export default function MensalPage() {
   const [now, setNow] = useState(() => new Date())
@@ -17,6 +22,8 @@ export default function MensalPage() {
   const [demandsByDate, setDemandsByDate] = useState<DemandsByDate>({})
   const [newDemandTitle, setNewDemandTitle] = useState('')
   const [newDemandNote, setNewDemandNote] = useState('')
+
+  const tickSettingsVersion = useTickSettingsVersion()
 
   const calendarYear = now.getFullYear()
   const calendarMonth = now.getMonth() + 1
@@ -97,11 +104,14 @@ export default function MensalPage() {
     year: 'numeric',
   }).format(now)
 
-  const timeLabel = new Intl.DateTimeFormat('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(now)
+  const timeLabel = useMemo(() => {
+    const showSeconds = readShowClockSeconds()
+    return new Intl.DateTimeFormat('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      ...(showSeconds ? { second: '2-digit' as const } : {}),
+    }).format(now)
+  }, [now, tickSettingsVersion])
 
   const fullDateLabel = new Intl.DateTimeFormat('pt-BR', {
     weekday: 'long',
@@ -228,31 +238,32 @@ export default function MensalPage() {
   }
 
   useEffect(() => {
+    if (!readAutoOpenTodayPanel()) return
     if (todayDemandsCount > 0) {
       setSelectedDay(todayDay)
     }
-  }, [todayDay, todayDemandsCount])
+  }, [todayDay, todayDemandsCount, tickSettingsVersion])
 
   return (
     <div className="flex h-full min-h-0 min-w-0 gap-2 lg:gap-4">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 sm:gap-5">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2 text-2xl font-semibold text-zinc-100 sm:text-3xl">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-3xl">
             <Calendar className="h-7 w-7 shrink-0 text-red-400 sm:h-8 sm:w-8" />
             <span className="min-w-0 capitalize">
               Mensal · {monthLabel}
             </span>
           </div>
 
-          <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-black/70 px-3 py-1.5 text-xs text-red-200 sm:text-sm">
+          <div className="inline-flex items-center gap-2 rounded-full border border-red-400/40 bg-red-50/90 px-3 py-1.5 text-xs text-red-800 sm:text-sm dark:border-red-500/30 dark:bg-black/70 dark:text-red-200">
             <span className="h-2 w-2 rounded-full bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.9)]" />
             <Clock3 className="h-4 w-4" />
             <span>{timeLabel}</span>
           </div>
         </div>
 
-        <div className="rounded-xl border border-red-500/20 bg-black/70 px-3.5 py-3 shadow-[0_0_30px_rgba(0,0,0,0.45)] sm:px-4.5 sm:py-3.5">
-          <p className="text-sm text-zinc-300">
+        <div className="rounded-xl border border-red-300/50 bg-white/80 px-3.5 py-3 shadow-sm sm:px-4.5 sm:py-3.5 dark:border-red-500/20 dark:bg-black/70 dark:shadow-[0_0_30px_rgba(0,0,0,0.45)]">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
             {fullDateLabel.charAt(0).toUpperCase() +
               fullDateLabel.slice(1)}
           </p>
@@ -261,12 +272,12 @@ export default function MensalPage() {
           </p>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-white/10 bg-black/60 p-1.5 sm:p-2">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-zinc-200/90 bg-zinc-100/60 p-1.5 sm:p-2 dark:border-white/10 dark:bg-black/60">
           <div className="grid grid-cols-7">
             {weekDays.map((day) => (
               <div
                 key={day}
-                className="px-1.5 py-1.5 text-center text-[13px] tracking-wide text-zinc-500 sm:py-2"
+                className="px-1.5 py-1.5 text-center text-[13px] tracking-wide text-zinc-600 sm:py-2 dark:text-zinc-500"
               >
                 {day}
               </div>
@@ -289,32 +300,32 @@ export default function MensalPage() {
                   className={`relative border p-1 transition-colors ${
                     isSelected
                       ? isToday
-                        ? 'border-red-400/35 bg-red-500/[0.08] ring-1 ring-red-400/25'
-                        : 'border-white/20 bg-white/[0.06] ring-1 ring-white/10'
+                        ? 'border-red-400/50 bg-red-100/80 ring-1 ring-red-300/50 dark:border-red-400/35 dark:bg-red-500/[0.08] dark:ring-red-400/25'
+                        : 'border-zinc-300/90 bg-white/90 ring-1 ring-zinc-200/80 dark:border-white/20 dark:bg-white/[0.06] dark:ring-white/10'
                       : isToday && day
-                        ? 'border-red-500/20 bg-red-500/[0.06]'
-                        : 'border-white/10 bg-black/30'
+                        ? 'border-red-300/60 bg-red-50/70 dark:border-red-500/20 dark:bg-red-500/[0.06]'
+                        : 'border-zinc-200/80 bg-white/50 dark:border-white/10 dark:bg-black/30'
                   }`}
                 >
                   {day ? (
                     <button
                       type="button"
                       onClick={() => openDayDemands(day)}
-                      className="group absolute inset-0 flex flex-col p-1.5 text-left transition hover:bg-white/[0.04]"
+                      className="group absolute inset-0 flex flex-col p-1.5 text-left transition hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
                       aria-label={`Abrir demandas do dia ${day}`}
                     >
                       <span
                         className={`self-start tabular-nums text-[0.95rem] font-semibold leading-none ${
                           isToday
-                            ? 'rounded-md bg-red-500/15 px-2 py-1 text-red-100 ring-1 ring-inset ring-red-400/35'
-                            : 'py-1 text-zinc-300'
+                            ? 'rounded-md bg-red-200/80 px-2 py-1 text-red-900 ring-1 ring-inset ring-red-400/40 dark:bg-red-500/15 dark:text-red-100 dark:ring-red-400/35'
+                            : 'py-1 text-zinc-700 dark:text-zinc-300'
                         }`}
                       >
                         {day}
                       </span>
 
                       {dayHasDemands ? (
-                        <span className="mt-auto inline-flex h-5 min-w-5 self-end items-center justify-center rounded-full border border-white/15 bg-white/10 px-1.5 text-[10px] font-semibold text-zinc-200">
+                        <span className="mt-auto inline-flex h-5 min-w-5 self-end items-center justify-center rounded-full border border-zinc-300/80 bg-zinc-200/80 px-1.5 text-[10px] font-semibold text-zinc-800 dark:border-white/15 dark:bg-white/10 dark:text-zinc-200">
                           {demandsByDate[
                             `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
                           ]?.length ?? 0}
@@ -322,7 +333,7 @@ export default function MensalPage() {
                       ) : null}
                     </button>
                   ) : (
-                    <span className="absolute top-1 left-1 text-zinc-700 text-xs">
+                    <span className="absolute top-1 left-1 text-xs text-zinc-400 dark:text-zinc-700">
                       ·
                     </span>
                   )}
@@ -338,7 +349,7 @@ export default function MensalPage() {
           <button
             type="button"
             aria-label="Fechar painel de demandas"
-            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm dark:bg-black/70 lg:hidden"
             onClick={closeDrawer}
           />
           <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md p-2 sm:p-3 lg:static lg:inset-auto lg:z-auto lg:h-full lg:w-[350px] lg:max-w-none lg:shrink-0 lg:p-0">
@@ -354,7 +365,7 @@ export default function MensalPage() {
               onToggleDemandDone={toggleDemandDone}
               onRemoveDemand={removeDemand}
               onClose={closeDrawer}
-              className="h-full border-white/15 bg-zinc-950 lg:border-white/10 lg:bg-zinc-950/95"
+              className="h-full border-zinc-200/90 bg-white/95 dark:border-white/15 dark:bg-zinc-950 lg:border-zinc-200/80 lg:bg-white/95 lg:dark:border-white/10 lg:dark:bg-zinc-950/95"
             />
           </div>
         </>
