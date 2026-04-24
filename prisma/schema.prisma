@@ -21,3 +21,17 @@ model Item {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 }
+
+/// Demandas do calendário mensal (uma linha por item; `dateKey` = YYYY-MM-DD).
+model DayDemand {
+  id        String   @id @default(cuid())
+  dateKey   String
+  title     String
+  note      String   @default("")
+  done      Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dateKey])
+}
