@@ -1,7 +1,9 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from './components/AppShell'
+import CadastroPage from './pages/CadastroPage'
 import ConfiguracoesPage from './pages/ConfiguracoesPage'
 import InicioPage from './pages/InicioPage'
+import LoginPage from './pages/LoginPage'
 import MensalPage from './pages/MensalPage'
 import MetasPage from './pages/MetasPage'
 import SemanaPage from './pages/SemanaPage'
@@ -10,6 +12,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/auth" element={<Navigate to="/auth/login" replace />} />
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/cadastro" element={<CadastroPage />} />
         <Route element={<AppShell />}>
           <Route path="/" element={<InicioPage />} />
           <Route path="/mensal" element={<MensalPage />} />

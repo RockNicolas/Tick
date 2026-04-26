@@ -4,6 +4,20 @@ export type DemandsByDate = Record<string, MonthlyDemand[]>
 
 const API_PREFIX = '/api'
 
+function requireLoggedUserId() {
+  const raw = localStorage.getItem('tick:user')
+  if (!raw) {
+    throw new Error('Usuario nao autenticado')
+  }
+  try {
+    const parsed = JSON.parse(raw) as { id?: string }
+    if (!parsed?.id) throw new Error('missing id')
+    return parsed.id
+  } catch {
+    throw new Error('Usuario nao autenticado')
+  }
+}
+
 function monthPrefix(year: number, month1to12: number) {
   return `${year}-${String(month1to12).padStart(2, '0')}-`
 }
@@ -41,7 +55,9 @@ export async function fetchDayDemandsForMonth(
   year: number,
   month1to12: number,
 ): Promise<DemandsByDate> {
+  const userId = requireLoggedUserId()
   const params = new URLSearchParams({
+    userId,
     year: String(year),
     month: String(month1to12),
   })
@@ -59,10 +75,11 @@ export async function saveDayDemandsForMonth(
   month1to12: number,
   byDate: DemandsByDate,
 ): Promise<void> {
+  const userId = requireLoggedUserId()
   const res = await fetch(`${API_PREFIX}/day-demands`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ year, month: month1to12, byDate }),
+    body: JSON.stringify({ userId, year, month: month1to12, byDate }),
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')

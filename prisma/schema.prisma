@@ -11,7 +11,9 @@ model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
+  password  String
   createdAt DateTime @default(now())
+  demands   DayDemand[]
 }
 
 model Item {
@@ -25,6 +27,8 @@ model Item {
 /// Demandas do calendário mensal (uma linha por item; `dateKey` = YYYY-MM-DD).
 model DayDemand {
   id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   dateKey   String
   title     String
   note      String   @default("")
@@ -34,4 +38,5 @@ model DayDemand {
   updatedAt DateTime @updatedAt
 
   @@index([dateKey])
+  @@index([userId, dateKey])
 }
