@@ -6,6 +6,7 @@ import InicioPage from './pages/InicioPage'
 import LoginPage from './pages/LoginPage'
 import MensalPage from './pages/MensalPage'
 import MetasPage from './pages/MetasPage'
+import PerfilPage from './pages/PerfilPage'
 import SemanaPage from './pages/SemanaPage'
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/mensal" element={<MensalPage />} />
           <Route path="/semana" element={<SemanaPage />} />
           <Route path="/metas" element={<MetasPage />} />
+          <Route path="/perfil" element={<PerfilPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
         </Route>
       </Routes>

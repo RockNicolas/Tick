@@ -48,9 +48,9 @@ export default function AppShell() {
   }, [])
 
   return (
-    <div className="relative isolate min-h-[100dvh] overflow-x-hidden text-zinc-900 dark:text-zinc-100">
+    <div className="relative isolate h-[100dvh] overflow-hidden text-zinc-900 dark:text-zinc-100">
       <AppBackground />
-      <div className="relative z-10 flex min-h-[100dvh] flex-col md:flex-row">
+      <div className="relative z-10 flex h-full flex-col md:flex-row">
         {mobileNavOpen ? (
           <button
             type="button"
@@ -90,10 +90,10 @@ export default function AppShell() {
             </div>
           </header>
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:pb-6 md:pt-[calc(3.5rem+1.25rem)] lg:px-8 lg:pb-8 lg:pt-[calc(3.5rem+1.5rem)]">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:pb-6 md:pt-[calc(3.5rem+1.25rem)] lg:px-8 lg:pb-8 lg:pt-[calc(3.5rem+1.5rem)]">
             <main
               id="main-content"
-              className="glass-panel min-h-0 min-w-0 flex-1 overflow-x-auto rounded-2xl p-4 shadow-lg shadow-zinc-400/20 sm:rounded-3xl sm:p-6 dark:shadow-black/40"
+              className="glass-panel min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-auto rounded-2xl p-4 shadow-lg shadow-zinc-400/20 sm:rounded-3xl sm:p-6 dark:shadow-black/40"
             >
              {/* <WelcomeGreeting /> */}
               <Outlet />

@@ -123,10 +123,10 @@ export default function DesktopTopBar() {
               className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10 dark:hover:text-white"
               onClick={() => {
                 setMenuOpen(false)
-                navigate('/')
+                navigate('/perfil')
               }}
             >
-              Perfil
+              Perfil 
             </button>
             <button
               type="button"
