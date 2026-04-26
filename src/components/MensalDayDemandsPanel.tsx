@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 export type MonthlyDemand = {
   title: string
+  category: string
   note: string
   done: boolean
 }
@@ -11,8 +12,10 @@ export type MensalDayDemandsPanelProps = {
   dateLabel: string
   demands: MonthlyDemand[]
   newDemandTitle: string
+  newDemandCategory: string
   newDemandNote: string
   onNewDemandTitleChange: (value: string) => void
+  onNewDemandCategoryChange: (value: string) => void
   onNewDemandNoteChange: (value: string) => void
   onAddDemand: () => void
   onUpdateDemand: (index: number, demand: MonthlyDemand) => void
@@ -26,8 +29,10 @@ export default function MensalDayDemandsPanel({
   dateLabel,
   demands,
   newDemandTitle,
+  newDemandCategory,
   newDemandNote,
   onNewDemandTitleChange,
+  onNewDemandCategoryChange,
   onNewDemandNoteChange,
   onAddDemand,
   onUpdateDemand,
@@ -39,21 +44,25 @@ export default function MensalDayDemandsPanel({
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editTitle, setEditTitle] = useState('')
+  const [editCategory, setEditCategory] = useState('geral')
   const [editNote, setEditNote] = useState('')
 
   useEffect(() => {
     setShowAddForm(false)
     setEditingIndex(null)
     setEditTitle('')
+    setEditCategory('geral')
     setEditNote('')
     onNewDemandTitleChange('')
+    onNewDemandCategoryChange('geral')
     onNewDemandNoteChange('')
-  }, [dateLabel, onNewDemandNoteChange, onNewDemandTitleChange])
+  }, [dateLabel, onNewDemandCategoryChange, onNewDemandNoteChange, onNewDemandTitleChange])
 
   useEffect(() => {
     if (editingIndex !== null && editingIndex >= demands.length) {
       setEditingIndex(null)
       setEditTitle('')
+      setEditCategory('geral')
       setEditNote('')
     }
   }, [demands.length, editingIndex])
@@ -75,6 +84,7 @@ export default function MensalDayDemandsPanel({
         event.stopPropagation()
         setEditingIndex(null)
         setEditTitle('')
+        setEditCategory('geral')
         setEditNote('')
       }
     }
@@ -84,6 +94,7 @@ export default function MensalDayDemandsPanel({
 
   const cancelAdd = () => {
     onNewDemandTitleChange('')
+    onNewDemandCategoryChange('geral')
     onNewDemandNoteChange('')
     setShowAddForm(false)
   }
@@ -100,12 +111,14 @@ export default function MensalDayDemandsPanel({
     setShowAddForm(false)
     setEditingIndex(index)
     setEditTitle(item.title)
+    setEditCategory(item.category || 'geral')
     setEditNote(item.note)
   }
 
   const cancelEdit = () => {
     setEditingIndex(null)
     setEditTitle('')
+    setEditCategory('geral')
     setEditNote('')
   }
 
@@ -115,6 +128,7 @@ export default function MensalDayDemandsPanel({
     if (!title) return
     onUpdateDemand(editingIndex, {
       title,
+      category: editCategory.trim() || 'geral',
       note: editNote.trim(),
       done: demands[editingIndex]?.done ?? false,
     })
@@ -130,6 +144,7 @@ export default function MensalDayDemandsPanel({
   const openNewDemand = () => {
     setEditingIndex(null)
     setEditTitle('')
+    setEditCategory('geral')
     setEditNote('')
     setShowAddForm(true)
   }
@@ -188,6 +203,21 @@ export default function MensalDayDemandsPanel({
                 }}
                 autoFocus
                 placeholder="Ex.: Revisar layout"
+                className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="demand-category"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500"
+              >
+                Categoria
+              </label>
+              <input
+                id="demand-category"
+                value={newDemandCategory}
+                onChange={(event) => onNewDemandCategoryChange(event.target.value)}
+                placeholder="Ex.: academia"
                 className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
               />
             </div>
@@ -267,6 +297,9 @@ export default function MensalDayDemandsPanel({
                       >
                         {demand.title}
                       </p>
+                      <p className="mt-0.5 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                        {demand.category || 'geral'}
+                      </p>
                       {demand.note ? (
                         <p
                           className={`mt-1 max-h-[4.5rem] overflow-hidden whitespace-pre-wrap break-words text-xs leading-relaxed ${
@@ -343,6 +376,20 @@ export default function MensalDayDemandsPanel({
                     }
                   }}
                   autoFocus
+                  className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="edit-demand-category"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
+                >
+                  Categoria
+                </label>
+                <input
+                  id="edit-demand-category"
+                  value={editCategory}
+                  onChange={(event) => setEditCategory(event.target.value)}
                   className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
                 />
               </div>

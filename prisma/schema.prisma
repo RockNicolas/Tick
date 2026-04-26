@@ -14,6 +14,7 @@ model User {
   password  String
   createdAt DateTime @default(now())
   demands   DayDemand[]
+  goals     Goal[]
 }
 
 model Item {
@@ -31,6 +32,7 @@ model DayDemand {
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   dateKey   String
   title     String
+  category  String   @default("geral")
   note      String   @default("")
   done      Boolean  @default(false)
   sortOrder Int      @default(0)
@@ -39,4 +41,22 @@ model DayDemand {
 
   @@index([dateKey])
   @@index([userId, dateKey])
+  @@index([userId, category, done])
+}
+
+model Goal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  category  String   @default("geral")
+  targetCount Int    @default(1)
+  progress  Int      @default(0)
+  status    String   @default("active")
+  dueDate   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, dueDate])
 }

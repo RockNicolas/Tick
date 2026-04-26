@@ -21,6 +21,7 @@ export default function MensalPage() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [demandsByDate, setDemandsByDate] = useState<DemandsByDate>({})
   const [newDemandTitle, setNewDemandTitle] = useState('')
+  const [newDemandCategory, setNewDemandCategory] = useState('geral')
   const [newDemandNote, setNewDemandNote] = useState('')
 
   const tickSettingsVersion = useTickSettingsVersion()
@@ -170,6 +171,7 @@ export default function MensalPage() {
   const openDayDemands = (day: number) => {
     setSelectedDay(day)
     setNewDemandTitle('')
+    setNewDemandCategory('geral')
     setNewDemandNote('')
   }
 
@@ -178,15 +180,17 @@ export default function MensalPage() {
     if (!title || selectedDateKey === null) return
 
     const note = newDemandNote.trim()
+    const category = newDemandCategory.trim() || 'geral'
 
     setDemandsByDate((previous) => ({
       ...previous,
       [selectedDateKey]: [
         ...(previous[selectedDateKey] ?? []),
-        { title, note, done: false },
+        { title, category, note, done: false },
       ],
     }))
     setNewDemandTitle('')
+    setNewDemandCategory('geral')
     setNewDemandNote('')
   }
 
@@ -200,6 +204,7 @@ export default function MensalPage() {
       if (demandIndex < 0 || demandIndex >= list.length) return previous
       list[demandIndex] = {
         title,
+        category: next.category.trim() || 'geral',
         note: next.note.trim(),
         done: Boolean(next.done),
       }
@@ -357,8 +362,10 @@ export default function MensalPage() {
               dateLabel={selectedDateLabel}
               demands={selectedDemands}
               newDemandTitle={newDemandTitle}
+              newDemandCategory={newDemandCategory}
               newDemandNote={newDemandNote}
               onNewDemandTitleChange={setNewDemandTitle}
+              onNewDemandCategoryChange={setNewDemandCategory}
               onNewDemandNoteChange={setNewDemandNote}
               onAddDemand={addDemand}
               onUpdateDemand={updateDemand}

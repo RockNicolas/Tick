@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Calendar, CalendarDays, Home, Settings, Target, UserRound, X } from 'lucide-react'
+import { Calendar, CalendarDays, Home, Settings, Target, X } from 'lucide-react'
 import { SITE_LOGO_SRC, SITE_NAME } from '../constants/branding'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 

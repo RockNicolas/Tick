@@ -182,6 +182,36 @@ function readUserId(raw) {
   return typeof raw === 'string' && raw.trim() ? raw.trim() : ''
 }
 
+function parseGoalStatus(raw) {
+  const value = typeof raw === 'string' ? raw.trim() : ''
+  if (!value) return ''
+  return ['active', 'completed', 'late'].includes(value) ? value : null
+}
+
+function serializeGoal(goal) {
+  return {
+    id: goal.id,
+    title: goal.title,
+    category: goal.category,
+    targetCount: goal.targetCount,
+    progress: goal.progress,
+    status: goal.status,
+    dueDate: goal.dueDate,
+    createdAt: goal.createdAt,
+    updatedAt: goal.updatedAt,
+  }
+}
+
+function normalizeCategory(raw) {
+  const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
+  return value || 'geral'
+}
+
+function currentMonthPrefix() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`
+}
+
 /** Lista demandas do mês agrupadas por dateKey (YYYY-MM-DD). */
 app.get('/api/day-demands', async (req, res) => {
   const userId = readUserId(req.query.userId)
@@ -208,6 +238,7 @@ app.get('/api/day-demands', async (req, res) => {
     if (!byDate[row.dateKey]) byDate[row.dateKey] = []
     byDate[row.dateKey].push({
       title: row.title,
+      category: row.category || 'geral',
       note: row.note,
       done: row.done,
     })
@@ -248,6 +279,7 @@ app.put('/api/day-demands', async (req, res) => {
         userId,
         dateKey,
         title,
+        category: normalizeCategory(raw?.category),
         note: typeof raw?.note === 'string' ? raw.note : '',
         done: Boolean(raw?.done),
         sortOrder,
@@ -264,6 +296,163 @@ app.put('/api/day-demands', async (req, res) => {
     }
   })
 
+  res.json({ ok: true })
+})
+
+app.get('/api/goals', async (req, res) => {
+  const userId = readUserId(req.query.userId)
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required' })
+  }
+  const status = parseGoalStatus(req.query.status)
+  if (status === null) {
+    return res.status(400).json({ error: 'invalid status' })
+  }
+
+  const goals = await prisma.goal.findMany({
+    where: {
+      userId,
+      ...(status ? { status } : {}),
+    },
+    orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { createdAt: 'desc' }],
+  })
+  const prefix = currentMonthPrefix()
+  const doneRows = await prisma.dayDemand.findMany({
+    where: { userId, done: true, dateKey: { startsWith: prefix } },
+    select: { category: true },
+  })
+  const doneByCategory = new Map()
+  for (const row of doneRows) {
+    const key = normalizeCategory(row.category)
+    doneByCategory.set(key, (doneByCategory.get(key) ?? 0) + 1)
+  }
+
+  const computed = goals.map((goal) => {
+    const doneCount = doneByCategory.get(normalizeCategory(goal.category)) ?? 0
+    const target = Math.max(1, goal.targetCount)
+    const progress = Math.min(100, Math.round((doneCount / target) * 100))
+    return { ...goal, progress }
+  })
+
+  res.json({ goals: computed.map(serializeGoal) })
+})
+
+app.post('/api/goals', async (req, res) => {
+  const userId = readUserId(req.body?.userId)
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required' })
+  }
+  const title = typeof req.body?.title === 'string' ? req.body.title.trim() : ''
+  if (!title) {
+    return res.status(400).json({ error: 'titulo da meta e obrigatorio' })
+  }
+
+  const category = normalizeCategory(req.body?.category)
+  const targetCountRaw = Number(req.body?.targetCount)
+  const targetCount = Number.isFinite(targetCountRaw) ? Math.max(1, Math.round(targetCountRaw)) : 1
+  const dueDateRaw = typeof req.body?.dueDate === 'string' ? req.body.dueDate.trim() : ''
+  const dueDate = dueDateRaw ? new Date(dueDateRaw) : null
+  if (dueDateRaw && Number.isNaN(dueDate?.getTime())) {
+    return res.status(400).json({ error: 'dueDate invalido' })
+  }
+
+  const goal = await prisma.goal.create({
+    data: {
+      userId,
+      title,
+      category,
+      targetCount,
+      progress: 0,
+      status: 'active',
+      dueDate,
+    },
+  })
+
+  res.status(201).json({ goal: serializeGoal(goal) })
+})
+
+app.patch('/api/goals/:goalId', async (req, res) => {
+  const userId = readUserId(req.body?.userId)
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required' })
+  }
+  const goalId = typeof req.params.goalId === 'string' ? req.params.goalId : ''
+  if (!goalId) {
+    return res.status(400).json({ error: 'goalId is required' })
+  }
+
+  const existing = await prisma.goal.findUnique({ where: { id: goalId } })
+  if (!existing || existing.userId !== userId) {
+    return res.status(404).json({ error: 'meta nao encontrada' })
+  }
+
+  const data = {}
+
+  if (typeof req.body?.title === 'string') {
+    const title = req.body.title.trim()
+    if (!title) return res.status(400).json({ error: 'titulo invalido' })
+    data.title = title
+  }
+  if (typeof req.body?.category === 'string') {
+    data.category = normalizeCategory(req.body.category)
+  }
+  if (req.body?.targetCount !== undefined) {
+    const targetRaw = Number(req.body.targetCount)
+    if (!Number.isFinite(targetRaw)) return res.status(400).json({ error: 'meta alvo invalida' })
+    data.targetCount = Math.max(1, Math.round(targetRaw))
+  }
+  if (req.body?.progress !== undefined) {
+    const progressRaw = Number(req.body.progress)
+    if (!Number.isFinite(progressRaw)) return res.status(400).json({ error: 'progresso invalido' })
+    data.progress = Math.max(0, Math.min(100, Math.round(progressRaw)))
+  }
+  if (req.body?.status !== undefined) {
+    const parsedStatus = parseGoalStatus(req.body.status)
+    if (!parsedStatus) return res.status(400).json({ error: 'status invalido' })
+    data.status = parsedStatus
+  }
+  if (req.body?.dueDate !== undefined) {
+    if (req.body.dueDate === null || req.body.dueDate === '') {
+      data.dueDate = null
+    } else if (typeof req.body.dueDate === 'string') {
+      const parsedDate = new Date(req.body.dueDate)
+      if (Number.isNaN(parsedDate.getTime())) return res.status(400).json({ error: 'dueDate invalido' })
+      data.dueDate = parsedDate
+    }
+  }
+
+  if (Object.keys(data).length === 0) {
+    return res.status(400).json({ error: 'nenhum campo para atualizar' })
+  }
+
+  if (data.progress === 100 && !data.status) {
+    data.status = 'completed'
+  }
+
+  const goal = await prisma.goal.update({
+    where: { id: goalId },
+    data,
+  })
+
+  res.json({ goal: serializeGoal(goal) })
+})
+
+app.delete('/api/goals/:goalId', async (req, res) => {
+  const userId = readUserId(req.body?.userId)
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required' })
+  }
+  const goalId = typeof req.params.goalId === 'string' ? req.params.goalId : ''
+  if (!goalId) {
+    return res.status(400).json({ error: 'goalId is required' })
+  }
+
+  const existing = await prisma.goal.findUnique({ where: { id: goalId } })
+  if (!existing || existing.userId !== userId) {
+    return res.status(404).json({ error: 'meta nao encontrada' })
+  }
+
+  await prisma.goal.delete({ where: { id: goalId } })
   res.json({ ok: true })
 })
 
