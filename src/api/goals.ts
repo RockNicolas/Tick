@@ -8,6 +8,7 @@ export type Goal = {
   progress: number
   status: GoalStatus
   dueDate: string | null
+  completedAt: string | null
   createdAt: string
   updatedAt: string
 }

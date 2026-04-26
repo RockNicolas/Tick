@@ -21,6 +21,19 @@ function formatDate(value: string | null) {
   return date.toLocaleDateString('pt-BR')
 }
 
+function formatDateTime(value: string | null) {
+  if (!value) return '--'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '--'
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
 export default function MetasPage() {
   const [selectedTab, setSelectedTab] = useState<GoalStatus>('active')
   const [goals, setGoals] = useState<Goal[]>([])
@@ -263,7 +276,17 @@ export default function MetasPage() {
                             />
                           </div>
                         </div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{formatDate(goal.dueDate)}</p>
+                        <p className="max-w-[7.5rem] shrink-0 text-right text-xs text-zinc-600 dark:text-zinc-400">
+                          {goal.status === 'completed' ? (
+                            <>
+                              Concluída
+                              <br />
+                              {formatDateTime(goal.completedAt ?? goal.updatedAt)}
+                            </>
+                          ) : (
+                            formatDate(goal.dueDate)
+                          )}
+                        </p>
                         <div className="flex items-center gap-2">
                           {goal.status === 'active' || goal.status === 'late' ? (
                             <button

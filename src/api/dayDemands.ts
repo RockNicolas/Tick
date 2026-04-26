@@ -86,3 +86,35 @@ export async function saveDayDemandsForMonth(
     throw new Error(text || `PUT day-demands failed: ${res.status}`)
   }
 }
+
+export function dateKeyFromDate(d: Date): string {
+  const y = d.getFullYear()
+  const m = d.getMonth() + 1
+  const day = d.getDate()
+  return `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+/** Domingo 00:00 da semana que contém `reference`. */
+export function startOfWeekSunday(reference: Date): Date {
+  const d = new Date(reference.getFullYear(), reference.getMonth(), reference.getDate())
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - d.getDay())
+  return d
+}
+
+/** Carrega demandas para os 7 dias (pode cruzar dois meses). */
+export async function fetchDayDemandsForWeek(weekStartSunday: Date): Promise<DemandsByDate> {
+  const monthKeys = new Set<string>()
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStartSunday)
+    d.setDate(weekStartSunday.getDate() + i)
+    monthKeys.add(`${d.getFullYear()}-${d.getMonth() + 1}`)
+  }
+  let merged: DemandsByDate = {}
+  for (const mk of monthKeys) {
+    const [y, m] = mk.split('-').map(Number)
+    const part = await fetchDayDemandsForMonth(y, m)
+    merged = { ...merged, ...part }
+  }
+  return merged
+}

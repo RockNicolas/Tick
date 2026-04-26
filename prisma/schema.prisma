@@ -34,6 +34,9 @@ model DayDemand {
   title     String
   category  String   @default("geral")
   note      String   @default("")
+  /// Horário local "HH:mm" para exibição na grade semanal (opcional).
+  startTime String?
+  endTime   String?
   done      Boolean  @default(false)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
@@ -54,9 +57,11 @@ model Goal {
   progress  Int      @default(0)
   status    String   @default("active")
   dueDate   DateTime?
+  completedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId, status])
   @@index([userId, dueDate])
+  @@index([userId, completedAt])
 }

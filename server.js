@@ -178,6 +178,37 @@ function monthPrefix(year, month) {
   return `${year}-${String(month).padStart(2, '0')}-`
 }
 
+function normalizeDemandTime(raw) {
+  if (typeof raw !== 'string') return null
+  const s = raw.trim()
+  if (!s) return null
+  const match = /^(\d{1,2}):(\d{2})$/.exec(s)
+  if (!match) return null
+  const h = Number(match[1])
+  const min = Number(match[2])
+  if (!Number.isFinite(h) || !Number.isFinite(min) || h < 0 || h > 23 || min < 0 || min > 59) {
+    return null
+  }
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`
+}
+
+function demandTimeToMinutes(value) {
+  if (!value) return null
+  const [h, m] = value.split(':').map(Number)
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null
+  return h * 60 + m
+}
+
+function parseDemandTimeRange(raw) {
+  const start = normalizeDemandTime(raw?.startTime)
+  const end = normalizeDemandTime(raw?.endTime)
+  if (!start || !end) return { startTime: null, endTime: null }
+  const a = demandTimeToMinutes(start)
+  const b = demandTimeToMinutes(end)
+  if (a === null || b === null || a >= b) return { startTime: null, endTime: null }
+  return { startTime: start, endTime: end }
+}
+
 function readUserId(raw) {
   return typeof raw === 'string' && raw.trim() ? raw.trim() : ''
 }
@@ -197,6 +228,7 @@ function serializeGoal(goal) {
     progress: goal.progress,
     status: goal.status,
     dueDate: goal.dueDate,
+    completedAt: goal.completedAt,
     createdAt: goal.createdAt,
     updatedAt: goal.updatedAt,
   }
@@ -240,6 +272,8 @@ app.get('/api/day-demands', async (req, res) => {
       title: row.title,
       category: row.category || 'geral',
       note: row.note,
+      startTime: row.startTime,
+      endTime: row.endTime,
       done: row.done,
     })
   }
@@ -275,12 +309,15 @@ app.put('/api/day-demands', async (req, res) => {
     items.forEach((raw, sortOrder) => {
       const title = typeof raw?.title === 'string' ? raw.title.trim() : ''
       if (!title) return
+      const { startTime, endTime } = parseDemandTimeRange(raw)
       rows.push({
         userId,
         dateKey,
         title,
         category: normalizeCategory(raw?.category),
         note: typeof raw?.note === 'string' ? raw.note : '',
+        startTime,
+        endTime,
         done: Boolean(raw?.done),
         sortOrder,
       })
@@ -427,6 +464,20 @@ app.patch('/api/goals/:goalId', async (req, res) => {
 
   if (data.progress === 100 && !data.status) {
     data.status = 'completed'
+  }
+
+  const nextStatus = data.status ?? existing.status
+  const nextProgress = data.progress ?? existing.progress
+  const isCompletedState = nextStatus === 'completed' || nextProgress >= 100
+  const wasCompleted = existing.status === 'completed' || existing.progress >= 100
+
+  if (isCompletedState) {
+    const becameCompleted = !wasCompleted
+    if (becameCompleted || !existing.completedAt) {
+      data.completedAt = new Date()
+    }
+  } else {
+    data.completedAt = null
   }
 
   const goal = await prisma.goal.update({

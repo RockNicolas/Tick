@@ -23,6 +23,8 @@ export default function MensalPage() {
   const [newDemandTitle, setNewDemandTitle] = useState('')
   const [newDemandCategory, setNewDemandCategory] = useState('geral')
   const [newDemandNote, setNewDemandNote] = useState('')
+  const [newDemandStartTime, setNewDemandStartTime] = useState('')
+  const [newDemandEndTime, setNewDemandEndTime] = useState('')
 
   const tickSettingsVersion = useTickSettingsVersion()
 
@@ -173,6 +175,8 @@ export default function MensalPage() {
     setNewDemandTitle('')
     setNewDemandCategory('geral')
     setNewDemandNote('')
+    setNewDemandStartTime('')
+    setNewDemandEndTime('')
   }
 
   const addDemand = () => {
@@ -181,17 +185,23 @@ export default function MensalPage() {
 
     const note = newDemandNote.trim()
     const category = newDemandCategory.trim() || 'geral'
+    const st = newDemandStartTime.trim()
+    const et = newDemandEndTime.trim()
+    const startTime = st && et ? st : null
+    const endTime = st && et ? et : null
 
     setDemandsByDate((previous) => ({
       ...previous,
       [selectedDateKey]: [
         ...(previous[selectedDateKey] ?? []),
-        { title, category, note, done: false },
+        { title, category, note, done: false, startTime, endTime },
       ],
     }))
     setNewDemandTitle('')
     setNewDemandCategory('geral')
     setNewDemandNote('')
+    setNewDemandStartTime('')
+    setNewDemandEndTime('')
   }
 
   const updateDemand = (demandIndex: number, next: MonthlyDemand) => {
@@ -202,11 +212,15 @@ export default function MensalPage() {
     setDemandsByDate((previous) => {
       const list = [...(previous[selectedDateKey] ?? [])]
       if (demandIndex < 0 || demandIndex >= list.length) return previous
+      const st = (next.startTime ?? '').trim()
+      const et = (next.endTime ?? '').trim()
       list[demandIndex] = {
         title,
         category: next.category.trim() || 'geral',
         note: next.note.trim(),
         done: Boolean(next.done),
+        startTime: st && et ? st : null,
+        endTime: st && et ? et : null,
       }
       return { ...previous, [selectedDateKey]: list }
     })
@@ -364,9 +378,13 @@ export default function MensalPage() {
               newDemandTitle={newDemandTitle}
               newDemandCategory={newDemandCategory}
               newDemandNote={newDemandNote}
+              newDemandStartTime={newDemandStartTime}
+              newDemandEndTime={newDemandEndTime}
               onNewDemandTitleChange={setNewDemandTitle}
               onNewDemandCategoryChange={setNewDemandCategory}
               onNewDemandNoteChange={setNewDemandNote}
+              onNewDemandStartTimeChange={setNewDemandStartTime}
+              onNewDemandEndTimeChange={setNewDemandEndTime}
               onAddDemand={addDemand}
               onUpdateDemand={updateDemand}
               onToggleDemandDone={toggleDemandDone}

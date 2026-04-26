@@ -1,11 +1,15 @@
 import { Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { demandHasTimeRange } from '../lib/timeRange'
 
 export type MonthlyDemand = {
   title: string
   category: string
   note: string
   done: boolean
+  /** "HH:mm" local; ambos preenchidos aparecem na grade Semana. */
+  startTime?: string | null
+  endTime?: string | null
 }
 
 export type MensalDayDemandsPanelProps = {
@@ -14,9 +18,13 @@ export type MensalDayDemandsPanelProps = {
   newDemandTitle: string
   newDemandCategory: string
   newDemandNote: string
+  newDemandStartTime: string
+  newDemandEndTime: string
   onNewDemandTitleChange: (value: string) => void
   onNewDemandCategoryChange: (value: string) => void
   onNewDemandNoteChange: (value: string) => void
+  onNewDemandStartTimeChange: (value: string) => void
+  onNewDemandEndTimeChange: (value: string) => void
   onAddDemand: () => void
   onUpdateDemand: (index: number, demand: MonthlyDemand) => void
   onToggleDemandDone: (index: number) => void
@@ -31,9 +39,13 @@ export default function MensalDayDemandsPanel({
   newDemandTitle,
   newDemandCategory,
   newDemandNote,
+  newDemandStartTime,
+  newDemandEndTime,
   onNewDemandTitleChange,
   onNewDemandCategoryChange,
   onNewDemandNoteChange,
+  onNewDemandStartTimeChange,
+  onNewDemandEndTimeChange,
   onAddDemand,
   onUpdateDemand,
   onToggleDemandDone,
@@ -46,6 +58,8 @@ export default function MensalDayDemandsPanel({
   const [editTitle, setEditTitle] = useState('')
   const [editCategory, setEditCategory] = useState('geral')
   const [editNote, setEditNote] = useState('')
+  const [editStartTime, setEditStartTime] = useState('')
+  const [editEndTime, setEditEndTime] = useState('')
 
   useEffect(() => {
     setShowAddForm(false)
@@ -56,7 +70,16 @@ export default function MensalDayDemandsPanel({
     onNewDemandTitleChange('')
     onNewDemandCategoryChange('geral')
     onNewDemandNoteChange('')
-  }, [dateLabel, onNewDemandCategoryChange, onNewDemandNoteChange, onNewDemandTitleChange])
+    onNewDemandStartTimeChange('')
+    onNewDemandEndTimeChange('')
+  }, [
+    dateLabel,
+    onNewDemandCategoryChange,
+    onNewDemandEndTimeChange,
+    onNewDemandNoteChange,
+    onNewDemandStartTimeChange,
+    onNewDemandTitleChange,
+  ])
 
   useEffect(() => {
     if (editingIndex !== null && editingIndex >= demands.length) {
@@ -64,6 +87,8 @@ export default function MensalDayDemandsPanel({
       setEditTitle('')
       setEditCategory('geral')
       setEditNote('')
+      setEditStartTime('')
+      setEditEndTime('')
     }
   }, [demands.length, editingIndex])
 
@@ -86,6 +111,8 @@ export default function MensalDayDemandsPanel({
         setEditTitle('')
         setEditCategory('geral')
         setEditNote('')
+        setEditStartTime('')
+        setEditEndTime('')
       }
     }
     window.addEventListener('keydown', onKey, true)
@@ -96,6 +123,8 @@ export default function MensalDayDemandsPanel({
     onNewDemandTitleChange('')
     onNewDemandCategoryChange('geral')
     onNewDemandNoteChange('')
+    onNewDemandStartTimeChange('')
+    onNewDemandEndTimeChange('')
     setShowAddForm(false)
   }
 
@@ -113,6 +142,8 @@ export default function MensalDayDemandsPanel({
     setEditTitle(item.title)
     setEditCategory(item.category || 'geral')
     setEditNote(item.note)
+    setEditStartTime(item.startTime ?? '')
+    setEditEndTime(item.endTime ?? '')
   }
 
   const cancelEdit = () => {
@@ -120,6 +151,8 @@ export default function MensalDayDemandsPanel({
     setEditTitle('')
     setEditCategory('geral')
     setEditNote('')
+    setEditStartTime('')
+    setEditEndTime('')
   }
 
   const submitEdit = () => {
@@ -131,6 +164,8 @@ export default function MensalDayDemandsPanel({
       category: editCategory.trim() || 'geral',
       note: editNote.trim(),
       done: demands[editingIndex]?.done ?? false,
+      startTime: editStartTime.trim() || null,
+      endTime: editEndTime.trim() || null,
     })
     cancelEdit()
   }
@@ -146,6 +181,8 @@ export default function MensalDayDemandsPanel({
     setEditTitle('')
     setEditCategory('geral')
     setEditNote('')
+    setEditStartTime('')
+    setEditEndTime('')
     setShowAddForm(true)
   }
 
@@ -237,6 +274,40 @@ export default function MensalDayDemandsPanel({
                 className="w-full resize-none rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
               />
             </div>
+            <div>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
+                Horário na semana <span className="font-normal normal-case text-zinc-500">(opcional)</span>
+              </p>
+              <div className="flex gap-2">
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="demand-start" className="sr-only">
+                    Início
+                  </label>
+                  <input
+                    id="demand-start"
+                    type="time"
+                    value={newDemandStartTime}
+                    onChange={(event) => onNewDemandStartTimeChange(event.target.value)}
+                    className="w-full rounded-lg border border-zinc-300/80 bg-white px-2 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="demand-end" className="sr-only">
+                    Fim
+                  </label>
+                  <input
+                    id="demand-end"
+                    type="time"
+                    value={newDemandEndTime}
+                    onChange={(event) => onNewDemandEndTimeChange(event.target.value)}
+                    className="w-full rounded-lg border border-zinc-300/80 bg-white px-2 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                  />
+                </div>
+              </div>
+              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500">
+                Preencha início e fim para o item aparecer na grade Semana.
+              </p>
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -299,6 +370,9 @@ export default function MensalDayDemandsPanel({
                       </p>
                       <p className="mt-0.5 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
                         {demand.category || 'geral'}
+                        {demandHasTimeRange(demand)
+                          ? ` · ${demand.startTime}–${demand.endTime}`
+                          : ''}
                       </p>
                       {demand.note ? (
                         <p
@@ -407,6 +481,27 @@ export default function MensalDayDemandsPanel({
                   rows={4}
                   className="w-full resize-none rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
                 />
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500">
+                  Horário na semana
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="time"
+                    value={editStartTime}
+                    onChange={(event) => setEditStartTime(event.target.value)}
+                    className="min-w-0 flex-1 rounded-lg border border-zinc-300/80 bg-white px-2 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                    aria-label="Hora início"
+                  />
+                  <input
+                    type="time"
+                    value={editEndTime}
+                    onChange={(event) => setEditEndTime(event.target.value)}
+                    className="min-w-0 flex-1 rounded-lg border border-zinc-300/80 bg-white px-2 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                    aria-label="Hora fim"
+                  />
+                </div>
               </div>
               <div className="flex gap-2 pt-1">
                 <button

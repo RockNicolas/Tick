@@ -80,7 +80,7 @@ export default function DesktopTopBar() {
 
   return (
     <header
-      className="fixed left-[13.5rem] right-0 top-0 z-30 hidden h-14 items-center justify-end gap-0.5 border-b border-zinc-200/80 bg-white/85 pt-[max(0.25rem,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/[0.06] dark:bg-zinc-950/90 md:flex md:pl-4 md:pr-5"
+      className="relative z-30 flex h-14 w-full shrink-0 items-center justify-end gap-0.5 border-b border-zinc-200/80 bg-white/85 pt-[max(0.25rem,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/[0.06] dark:bg-zinc-950/90 md:pl-4 md:pr-5"
       role="banner"
     >
       <ThemeToggleButton />
