@@ -446,7 +446,7 @@ export default function MensalDayDemandsPanel({
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-demand-dialog-title"
-            className="relative z-[101] max-h-[86vh] w-[min(92vw,380px)] overflow-y-auto rounded-xl border border-zinc-200/90 bg-white p-3 shadow-xl shadow-zinc-400/15 dark:border-white/15 dark:bg-zinc-950 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_80px_rgba(0,0,0,0.65)]"
+            className="relative z-[101] flex max-h-[86vh] w-[min(94vw,860px)] flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-3 shadow-xl shadow-zinc-400/15 dark:border-white/15 dark:bg-zinc-950 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_80px_rgba(0,0,0,0.65)]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -468,8 +468,9 @@ export default function MensalDayDemandsPanel({
               </button>
             </div>
 
-            <div className="mt-2.5 space-y-2">
-              <div>
+            <div className="mt-2.5 min-h-0 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3">
+              <div className="md:col-span-2">
                 <label
                   htmlFor="edit-demand-title"
                   className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
@@ -504,7 +505,7 @@ export default function MensalDayDemandsPanel({
                   className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
                 />
               </div>
-              <div>
+              <div className="md:row-span-2">
                 <label
                   htmlFor="edit-demand-note"
                   className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
@@ -515,7 +516,7 @@ export default function MensalDayDemandsPanel({
                   id="edit-demand-note"
                   value={editNote}
                   onChange={(event) => setEditNote(event.target.value)}
-                  rows={2}
+                  rows={6}
                   className="w-full resize-none rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
                 />
               </div>
@@ -558,7 +559,7 @@ export default function MensalDayDemandsPanel({
                   />
                 </div>
               </div>
-              <div className="flex gap-2 pt-1">
+              <div className="flex gap-2 pt-1 md:col-span-2">
                 <button
                   type="button"
                   onClick={cancelEdit}
@@ -577,11 +578,12 @@ export default function MensalDayDemandsPanel({
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-800/25 bg-red-100/90 px-3 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-red-200/80 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200 dark:hover:bg-red-500/20"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-800/25 bg-red-100/90 px-3 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-red-200/80 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200 dark:hover:bg-red-500/20 md:col-span-2"
               >
                 <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
                 Excluir demanda
               </button>
+              </div>
             </div>
           </div>
         </div>

@@ -5,10 +5,9 @@ import { useMediaQuery } from '../hooks/useMediaQuery'
 
 const mainItems = [
   { to: '/', label: 'Início', icon: Home, end: true },
-  { to: '/mensal', label: 'Mensal', icon: Calendar, end: false },
   { to: '/semana', label: 'Semana', icon: CalendarDays, end: false },
+  { to: '/mensal', label: 'Mensal', icon: Calendar, end: false },
   { to: '/metas', label: 'Metas', icon: Target, end: false },
- // { to: '/perfil', label: 'Perfil', icon: UserRound, end: false },
 ] as const
 
 const footerItem = { to: '/configuracoes', label: 'Configurações', icon: Settings, end: false } as const
