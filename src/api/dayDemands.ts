@@ -1,4 +1,4 @@
-import type { MonthlyDemand } from '../components/MensalDayDemandsPanel'
+import type { MonthlyDemand } from '../types/monthlyDemand'
 
 export type DemandsByDate = Record<string, MonthlyDemand[]>
 

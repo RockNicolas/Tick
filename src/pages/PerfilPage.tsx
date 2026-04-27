@@ -7,63 +7,14 @@ import {
   NotepadText,
   Trophy,
   UserRound,
-  type LucideIcon,
 } from 'lucide-react'
-import { type ReactNode, useMemo } from 'react'
-
-type StoredUser = {
-  id: string
-  name: string
-  email: string
-}
-
-function readStoredUser(): StoredUser | null {
-  const raw = localStorage.getItem('tick:user')
-  if (!raw) return null
-  try {
-    const parsed = JSON.parse(raw) as StoredUser
-    if (!parsed?.id || !parsed?.name || !parsed?.email) return null
-    return parsed
-  } catch {
-    return null
-  }
-}
-
-function getUserInitials(name: string) {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-  if (parts.length === 0) return '??'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
-}
-
-function SectionCard({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string
-  icon: LucideIcon
-  children: ReactNode
-}) {
-  return (
-    <section className="rounded-2xl border border-zinc-200/90 bg-white/70 p-4 shadow-sm sm:p-5 dark:border-white/10 dark:bg-black/35">
-      <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-3 dark:border-white/[0.06]">
-        <Icon className="h-5 w-5 shrink-0 text-red-400/90" aria-hidden />
-        <h2 className="text-sm font-semibold tracking-wide text-zinc-800 uppercase dark:text-zinc-200">
-          {title}
-        </h2>
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  )
-}
+import { useMemo } from 'react'
+import SettingsSectionCard from '../components/settings/SettingsSectionCard'
+import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
 
 export default function PerfilPage() {
-  const user = useMemo(() => readStoredUser(), [])
-  const userName = user?.name ?? 'Usuário Tick'
+  const user = useMemo(() => readTickStoredUser(), [])
+  const userName = user?.name?.trim() ? user.name : 'Usuário Tick'
   const userEmail = user?.email ?? 'usuario@tick.app'
   const initials = getUserInitials(userName)
 
@@ -75,7 +26,7 @@ export default function PerfilPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr]">
-        <SectionCard title="Identidade e foco" icon={Focus}>
+        <SettingsSectionCard title="Identidade e foco" icon={Focus}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="inline-flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-zinc-300/80 bg-zinc-100 text-xl font-semibold text-zinc-800 dark:border-white/15 dark:bg-white/10 dark:text-zinc-100">
               {initials}
@@ -86,9 +37,9 @@ export default function PerfilPage() {
               <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">Membro desde abril de 2026</p>
             </div>
           </div>
-        </SectionCard>
+        </SettingsSectionCard>
 
-        <SectionCard title="Metas e conquistas" icon={Trophy}>
+        <SettingsSectionCard title="Metas e conquistas" icon={Trophy}>
           <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden />
@@ -103,11 +54,11 @@ export default function PerfilPage() {
               Foco semanal: produtividade
             </li>
           </ul>
-        </SectionCard>
+        </SettingsSectionCard>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <SectionCard title="Integrações e ferramentas" icon={Link2}>
+        <SettingsSectionCard title="Integrações e ferramentas" icon={Link2}>
           <div className="grid grid-cols-2 gap-2 text-sm">
             {[
               { label: 'Google Calendar', connected: true },
@@ -130,16 +81,16 @@ export default function PerfilPage() {
               </div>
             ))}
           </div>
-        </SectionCard>
+        </SettingsSectionCard>
 
-        <SectionCard title="Privacidade e notificações" icon={Bell}>
+        <SettingsSectionCard title="Privacidade e notificações" icon={Bell}>
           <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
             <li>Email diário: ativado</li>
             <li>Lembretes de metas: ativado</li>
             <li>Modo privado: desativado</li>
             <li>Alertas sonoros: ativos</li>
           </ul>
-        </SectionCard>
+        </SettingsSectionCard>
       </div>
     </div>
   )

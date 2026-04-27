@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { startTransition, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { SITE_LOGO_SRC, SITE_NAME } from '../constants/branding'
@@ -15,7 +15,9 @@ export default function AppShell() {
   const isMobileLayout = useMediaQuery('(max-width: 767px)')
 
   useEffect(() => {
-    setMobileNavOpen(false)
+    startTransition(() => {
+      setMobileNavOpen(false)
+    })
   }, [location.pathname])
 
   useEffect(() => {

@@ -1,47 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bell, UserRound } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { getUserInitials, readTickStoredUser, type TickStoredUser } from '../lib/tickUser'
 import ThemeToggleButton from './ThemeToggleButton'
-
-type StoredUser = {
-  id: string
-  name: string
-  email: string
-}
-
-function getUserInitials(name: string) {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-  if (parts.length === 0) return '??'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
-}
 
 export default function DesktopTopBar() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [user, setUser] = useState<StoredUser | null>(null)
+  const [user, setUser] = useState<TickStoredUser | null>(() => readTickStoredUser())
   const menuRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    const raw = localStorage.getItem('tick:user')
-    if (!raw) {
-      setUser(null)
-      return
-    }
-    try {
-      const parsed = JSON.parse(raw) as StoredUser
-      if (parsed?.id && parsed?.email) {
-        setUser(parsed)
-      } else {
-        setUser(null)
-      }
-    } catch {
-      setUser(null)
-    }
-  }, [])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -106,7 +73,7 @@ export default function DesktopTopBar() {
           onClick={handleAccountClick}
         >
           {user ? (
-            <span aria-hidden>{getUserInitials(user.name)}</span>
+            <span aria-hidden>{getUserInitials(user.name || user.email)}</span>
           ) : (
             <UserRound className="h-5 w-5" strokeWidth={1.75} aria-hidden />
           )}

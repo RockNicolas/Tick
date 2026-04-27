@@ -1,12 +1,7 @@
-import {
-  Calendar,
-  Clock,
-  Keyboard,
-  Settings,
-  Sparkles,
-  type LucideIcon,
-} from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Calendar, Clock, Keyboard, Settings, Sparkles } from 'lucide-react'
+import { startTransition, useEffect, useState } from 'react'
+import SettingsSectionCard from '../components/settings/SettingsSectionCard'
+import SettingsToggleRow from '../components/settings/SettingsToggleRow'
 import { SITE_NAME } from '../constants/branding'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
 import {
@@ -16,72 +11,6 @@ import {
   writeShowClockSeconds,
 } from '../lib/tickSettings'
 
-function ToggleRow({
-  id,
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  id: string
-  label: string
-  description: string
-  checked: boolean
-  onChange: (next: boolean) => void
-}) {
-  return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{label}</p>
-        <p className="mt-1 text-xs leading-relaxed text-zinc-600 sm:text-sm dark:text-zinc-500">
-          {description}
-        </p>
-      </div>
-      <button
-        type="button"
-        id={id}
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border transition ${
-          checked
-            ? 'border-red-500/50 bg-red-600/90 shadow-[0_0_16px_rgba(220,38,38,0.25)]'
-            : 'border-zinc-300/80 bg-zinc-100/90 hover:border-zinc-400 dark:border-white/15 dark:bg-black/40 dark:hover:border-white/25'
-        }`}
-      >
-        <span
-          className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition ${
-            checked ? 'translate-x-5' : 'translate-x-0'
-          }`}
-        />
-        <span className="sr-only">{label}</span>
-      </button>
-    </div>
-  )
-}
-
-function SectionCard({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: LucideIcon
-  title: string
-  children: ReactNode
-}) {
-  return (
-    <section className="flex h-full min-h-0 flex-col rounded-2xl border border-zinc-200/90 bg-white/70 p-4 shadow-sm sm:p-5 dark:border-white/10 dark:bg-black/35">
-      <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-3 dark:border-white/[0.06]">
-        <Icon className="h-5 w-5 shrink-0 text-red-400/90" aria-hidden />
-        <h2 className="text-sm font-semibold tracking-wide text-zinc-800 uppercase dark:text-zinc-200">
-          {title}
-        </h2>
-      </div>
-      <div className="mt-4 min-h-0 flex-1 space-y-6">{children}</div>
-    </section>
-  )
-}
-
 export default function ConfiguracoesPage() {
   const tickSettingsVersion = useTickSettingsVersion()
 
@@ -89,8 +18,10 @@ export default function ConfiguracoesPage() {
   const [showSeconds, setShowSeconds] = useState(() => readShowClockSeconds())
 
   useEffect(() => {
-    setAutoOpen(readAutoOpenTodayPanel())
-    setShowSeconds(readShowClockSeconds())
+    startTransition(() => {
+      setAutoOpen(readAutoOpenTodayPanel())
+      setShowSeconds(readShowClockSeconds())
+    })
   }, [tickSettingsVersion])
 
   return (
@@ -104,8 +35,8 @@ export default function ConfiguracoesPage() {
       </p>
 
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-2">
-        <SectionCard icon={Calendar} title="Visão mensal">
-          <ToggleRow
+        <SettingsSectionCard icon={Calendar} title="Visão mensal" fillHeight>
+          <SettingsToggleRow
             id="toggle-auto-open"
             label="Abrir painel do dia automaticamente"
             description="Se hoje tiver demandas, o painel lateral abre sozinho ao carregar a página mensal."
@@ -115,10 +46,10 @@ export default function ConfiguracoesPage() {
               setAutoOpen(next)
             }}
           />
-        </SectionCard>
+        </SettingsSectionCard>
 
-        <SectionCard icon={Clock} title="Aparência">
-          <ToggleRow
+        <SettingsSectionCard icon={Clock} title="Aparência" fillHeight>
+          <SettingsToggleRow
             id="toggle-seconds"
             label="Mostrar segundos no relógio"
             description="No topo da visão mensal, o relógio pode mostrar ou esconder os segundos."
@@ -128,9 +59,9 @@ export default function ConfiguracoesPage() {
               setShowSeconds(next)
             }}
           />
-        </SectionCard>
+        </SettingsSectionCard>
 
-        <SectionCard icon={Keyboard} title="Atalhos">
+        <SettingsSectionCard icon={Keyboard} title="Atalhos" fillHeight>
           <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
             <li>
               <span className="font-medium text-zinc-800 dark:text-zinc-300">Esc</span> — fecha o painel de
@@ -141,15 +72,15 @@ export default function ConfiguracoesPage() {
               edição de uma demanda, fecha só o modal.
             </li>
           </ul>
-        </SectionCard>
+        </SettingsSectionCard>
 
-        <SectionCard icon={Sparkles} title="Sobre">
+        <SettingsSectionCard icon={Sparkles} title="Sobre" fillHeight>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             <span className="font-semibold text-zinc-900 dark:text-zinc-200">{SITE_NAME}</span> — agenda e
             demandas com foco no mês atual. Versão do pacote:{' '}
             <span className="tabular-nums text-zinc-800 dark:text-zinc-300">0.0.0</span>
           </p>
-        </SectionCard>
+        </SettingsSectionCard>
       </div>
     </div>
   )
