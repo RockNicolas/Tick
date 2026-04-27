@@ -12,7 +12,7 @@ import ThemeToggleButton from './ThemeToggleButton'
 export default function AppShell() {
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const isMobileLayout = useMediaQuery('(max-device-width: 767px)')
+  const isMobileLayout = useMediaQuery('(max-width: 767px)')
 
   useEffect(() => {
     setMobileNavOpen(false)

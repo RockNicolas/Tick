@@ -2,6 +2,34 @@ import type { MonthlyDemand } from '../components/MensalDayDemandsPanel'
 
 export type DemandsByDate = Record<string, MonthlyDemand[]>
 
+function normalizePriority(raw: unknown): 'baixa' | 'media' | 'importante' {
+  const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
+  if (value === 'baixa' || value === 'importante') return value
+  return 'media'
+}
+
+function colorFromPriority(priority: 'baixa' | 'media' | 'importante'): string {
+  if (priority === 'baixa') return '#3b82f6'
+  if (priority === 'importante') return '#ef4444'
+  return '#f59e0b'
+}
+
+function normalizeDemands(byDate: DemandsByDate): DemandsByDate {
+  const out: DemandsByDate = {}
+  for (const [dateKey, list] of Object.entries(byDate)) {
+    if (!Array.isArray(list)) continue
+    out[dateKey] = list.map((d) => {
+      const priority = normalizePriority(d.priority)
+      return {
+        ...d,
+        priority,
+        color: colorFromPriority(priority),
+      }
+    })
+  }
+  return out
+}
+
 const API_PREFIX = '/api'
 
 function requireLoggedUserId() {
@@ -67,7 +95,7 @@ export async function fetchDayDemandsForMonth(
     throw new Error(text || `GET day-demands failed: ${res.status}`)
   }
   const data = (await res.json()) as { byDate?: DemandsByDate }
-  return data.byDate ?? {}
+  return normalizeDemands(data.byDate ?? {})
 }
 
 export async function saveDayDemandsForMonth(
@@ -76,10 +104,11 @@ export async function saveDayDemandsForMonth(
   byDate: DemandsByDate,
 ): Promise<void> {
   const userId = requireLoggedUserId()
+  const sanitized = normalizeDemands(byDate)
   const res = await fetch(`${API_PREFIX}/day-demands`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, year, month: month1to12, byDate }),
+    body: JSON.stringify({ userId, year, month: month1to12, byDate: sanitized }),
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')

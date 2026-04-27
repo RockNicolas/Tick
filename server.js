@@ -239,6 +239,18 @@ function normalizeCategory(raw) {
   return value || 'geral'
 }
 
+function normalizePriority(raw) {
+  const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
+  if (value === 'baixa' || value === 'importante') return value
+  return 'media'
+}
+
+function colorFromPriority(priority) {
+  if (priority === 'baixa') return '#3b82f6'
+  if (priority === 'importante') return '#ef4444'
+  return '#f59e0b'
+}
+
 function currentMonthPrefix() {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`
@@ -272,6 +284,8 @@ app.get('/api/day-demands', async (req, res) => {
       title: row.title,
       category: row.category || 'geral',
       note: row.note,
+      priority: normalizePriority(row.priority),
+      color: row.color || colorFromPriority(normalizePriority(row.priority)),
       startTime: row.startTime,
       endTime: row.endTime,
       done: row.done,
@@ -310,12 +324,15 @@ app.put('/api/day-demands', async (req, res) => {
       const title = typeof raw?.title === 'string' ? raw.title.trim() : ''
       if (!title) return
       const { startTime, endTime } = parseDemandTimeRange(raw)
+      const priority = normalizePriority(raw?.priority)
       rows.push({
         userId,
         dateKey,
         title,
         category: normalizeCategory(raw?.category),
         note: typeof raw?.note === 'string' ? raw.note : '',
+        priority,
+        color: colorFromPriority(priority),
         startTime,
         endTime,
         done: Boolean(raw?.done),

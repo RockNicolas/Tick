@@ -309,6 +309,8 @@ export default function SemanaPage() {
                           const topPct = ((clip.start - viewStart) / viewTotalMin) * 100
                           const hPct = ((clip.end - clip.start) / viewTotalMin) * 100
                           const { wrap, icon: Icon } = categoryStyle(d.category)
+                          const customColor = typeof d.color === 'string' ? d.color.trim() : ''
+                          const hasCustomColor = /^#[0-9a-f]{6}$/i.test(customColor)
                           return (
                             <div
                               key={`${dateKey}-${index}-${d.title}`}
@@ -321,9 +323,15 @@ export default function SemanaPage() {
                               title={`${d.startTime}–${d.endTime}`}
                             >
                               <div
-                                className={`flex h-full min-h-0 flex-col gap-0.5 rounded-md border ${wrap} ${
-                                  d.done ? 'opacity-50' : ''
-                                }`}
+                                className={`flex h-full min-h-0 flex-col gap-0.5 rounded-md border ${hasCustomColor ? 'text-white' : wrap} ${d.done ? 'opacity-50' : ''}`}
+                                style={
+                                  hasCustomColor
+                                    ? {
+                                        borderColor: customColor,
+                                        backgroundColor: `${customColor}40`,
+                                      }
+                                    : undefined
+                                }
                               >
                                 <div className="flex min-w-0 items-start gap-1">
                                   <Icon className="mt-0.5 h-3 w-3 shrink-0 opacity-90" aria-hidden />

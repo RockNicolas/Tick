@@ -23,6 +23,7 @@ export default function MensalPage() {
   const [newDemandTitle, setNewDemandTitle] = useState('')
   const [newDemandCategory, setNewDemandCategory] = useState('geral')
   const [newDemandNote, setNewDemandNote] = useState('')
+  const [newDemandPriority, setNewDemandPriority] = useState<'baixa' | 'media' | 'importante'>('media')
   const [newDemandStartTime, setNewDemandStartTime] = useState('')
   const [newDemandEndTime, setNewDemandEndTime] = useState('')
 
@@ -175,6 +176,7 @@ export default function MensalPage() {
     setNewDemandTitle('')
     setNewDemandCategory('geral')
     setNewDemandNote('')
+    setNewDemandPriority('media')
     setNewDemandStartTime('')
     setNewDemandEndTime('')
   }
@@ -185,6 +187,8 @@ export default function MensalPage() {
 
     const note = newDemandNote.trim()
     const category = newDemandCategory.trim() || 'geral'
+    const priority = newDemandPriority
+    const color = priority === 'baixa' ? '#3b82f6' : priority === 'importante' ? '#ef4444' : '#f59e0b'
     const st = newDemandStartTime.trim()
     const et = newDemandEndTime.trim()
     const startTime = st && et ? st : null
@@ -194,12 +198,13 @@ export default function MensalPage() {
       ...previous,
       [selectedDateKey]: [
         ...(previous[selectedDateKey] ?? []),
-        { title, category, note, done: false, startTime, endTime },
+        { title, category, note, priority, color, done: false, startTime, endTime },
       ],
     }))
     setNewDemandTitle('')
     setNewDemandCategory('geral')
     setNewDemandNote('')
+    setNewDemandPriority('media')
     setNewDemandStartTime('')
     setNewDemandEndTime('')
   }
@@ -218,6 +223,13 @@ export default function MensalPage() {
         title,
         category: next.category.trim() || 'geral',
         note: next.note.trim(),
+        priority: next.priority ?? 'media',
+        color:
+          next.priority === 'baixa'
+            ? '#3b82f6'
+            : next.priority === 'importante'
+              ? '#ef4444'
+              : '#f59e0b',
         done: Boolean(next.done),
         startTime: st && et ? st : null,
         endTime: st && et ? et : null,
@@ -371,18 +383,20 @@ export default function MensalPage() {
             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm dark:bg-black/70 lg:hidden"
             onClick={closeDrawer}
           />
-          <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md p-2 sm:p-3 lg:static lg:inset-auto lg:z-auto lg:h-full lg:w-[350px] lg:max-w-none lg:shrink-0 lg:p-0">
+          <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md overflow-y-auto p-2 sm:p-3 lg:static lg:inset-auto lg:z-auto lg:h-full lg:w-[350px] lg:max-w-none lg:shrink-0 lg:overflow-y-auto lg:p-0">
             <MensalDayDemandsPanel
               dateLabel={selectedDateLabel}
               demands={selectedDemands}
               newDemandTitle={newDemandTitle}
               newDemandCategory={newDemandCategory}
               newDemandNote={newDemandNote}
+              newDemandPriority={newDemandPriority}
               newDemandStartTime={newDemandStartTime}
               newDemandEndTime={newDemandEndTime}
               onNewDemandTitleChange={setNewDemandTitle}
               onNewDemandCategoryChange={setNewDemandCategory}
               onNewDemandNoteChange={setNewDemandNote}
+              onNewDemandPriorityChange={setNewDemandPriority}
               onNewDemandStartTimeChange={setNewDemandStartTime}
               onNewDemandEndTimeChange={setNewDemandEndTime}
               onAddDemand={addDemand}

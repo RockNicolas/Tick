@@ -7,6 +7,8 @@ export type MonthlyDemand = {
   category: string
   note: string
   done: boolean
+  priority?: 'baixa' | 'media' | 'importante'
+  color?: string
   /** "HH:mm" local; ambos preenchidos aparecem na grade Semana. */
   startTime?: string | null
   endTime?: string | null
@@ -18,11 +20,13 @@ export type MensalDayDemandsPanelProps = {
   newDemandTitle: string
   newDemandCategory: string
   newDemandNote: string
+  newDemandPriority: 'baixa' | 'media' | 'importante'
   newDemandStartTime: string
   newDemandEndTime: string
   onNewDemandTitleChange: (value: string) => void
   onNewDemandCategoryChange: (value: string) => void
   onNewDemandNoteChange: (value: string) => void
+  onNewDemandPriorityChange: (value: 'baixa' | 'media' | 'importante') => void
   onNewDemandStartTimeChange: (value: string) => void
   onNewDemandEndTimeChange: (value: string) => void
   onAddDemand: () => void
@@ -39,11 +43,13 @@ export default function MensalDayDemandsPanel({
   newDemandTitle,
   newDemandCategory,
   newDemandNote,
+  newDemandPriority,
   newDemandStartTime,
   newDemandEndTime,
   onNewDemandTitleChange,
   onNewDemandCategoryChange,
   onNewDemandNoteChange,
+  onNewDemandPriorityChange,
   onNewDemandStartTimeChange,
   onNewDemandEndTimeChange,
   onAddDemand,
@@ -58,6 +64,7 @@ export default function MensalDayDemandsPanel({
   const [editTitle, setEditTitle] = useState('')
   const [editCategory, setEditCategory] = useState('geral')
   const [editNote, setEditNote] = useState('')
+  const [editPriority, setEditPriority] = useState<'baixa' | 'media' | 'importante'>('media')
   const [editStartTime, setEditStartTime] = useState('')
   const [editEndTime, setEditEndTime] = useState('')
 
@@ -67,9 +74,11 @@ export default function MensalDayDemandsPanel({
     setEditTitle('')
     setEditCategory('geral')
     setEditNote('')
+    setEditPriority('media')
     onNewDemandTitleChange('')
     onNewDemandCategoryChange('geral')
     onNewDemandNoteChange('')
+    onNewDemandPriorityChange('media')
     onNewDemandStartTimeChange('')
     onNewDemandEndTimeChange('')
   }, [
@@ -77,6 +86,7 @@ export default function MensalDayDemandsPanel({
     onNewDemandCategoryChange,
     onNewDemandEndTimeChange,
     onNewDemandNoteChange,
+    onNewDemandPriorityChange,
     onNewDemandStartTimeChange,
     onNewDemandTitleChange,
   ])
@@ -87,6 +97,7 @@ export default function MensalDayDemandsPanel({
       setEditTitle('')
       setEditCategory('geral')
       setEditNote('')
+      setEditPriority('media')
       setEditStartTime('')
       setEditEndTime('')
     }
@@ -111,6 +122,7 @@ export default function MensalDayDemandsPanel({
         setEditTitle('')
         setEditCategory('geral')
         setEditNote('')
+        setEditPriority('media')
         setEditStartTime('')
         setEditEndTime('')
       }
@@ -123,6 +135,7 @@ export default function MensalDayDemandsPanel({
     onNewDemandTitleChange('')
     onNewDemandCategoryChange('geral')
     onNewDemandNoteChange('')
+    onNewDemandPriorityChange('media')
     onNewDemandStartTimeChange('')
     onNewDemandEndTimeChange('')
     setShowAddForm(false)
@@ -142,6 +155,7 @@ export default function MensalDayDemandsPanel({
     setEditTitle(item.title)
     setEditCategory(item.category || 'geral')
     setEditNote(item.note)
+    setEditPriority(item.priority ?? 'media')
     setEditStartTime(item.startTime ?? '')
     setEditEndTime(item.endTime ?? '')
   }
@@ -151,6 +165,7 @@ export default function MensalDayDemandsPanel({
     setEditTitle('')
     setEditCategory('geral')
     setEditNote('')
+    setEditPriority('media')
     setEditStartTime('')
     setEditEndTime('')
   }
@@ -163,6 +178,8 @@ export default function MensalDayDemandsPanel({
       title,
       category: editCategory.trim() || 'geral',
       note: editNote.trim(),
+      priority: editPriority,
+      color: editPriority === 'baixa' ? '#3b82f6' : editPriority === 'importante' ? '#ef4444' : '#f59e0b',
       done: demands[editingIndex]?.done ?? false,
       startTime: editStartTime.trim() || null,
       endTime: editEndTime.trim() || null,
@@ -181,6 +198,7 @@ export default function MensalDayDemandsPanel({
     setEditTitle('')
     setEditCategory('geral')
     setEditNote('')
+    setEditPriority('media')
     setEditStartTime('')
     setEditEndTime('')
     setShowAddForm(true)
@@ -188,7 +206,7 @@ export default function MensalDayDemandsPanel({
 
   return (
     <aside
-      className={`flex h-full w-full flex-col rounded-2xl border border-zinc-200/90 bg-white/95 p-4 shadow-2xl shadow-zinc-400/20 dark:border-white/10 dark:bg-zinc-950/95 dark:shadow-black/50 ${className ?? ''}`}
+      className={`flex h-full min-h-0 w-full flex-col overflow-y-auto rounded-2xl border border-zinc-200/90 bg-white/95 p-4 shadow-2xl shadow-zinc-400/20 dark:border-white/10 dark:bg-zinc-950/95 dark:shadow-black/50 ${className ?? ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -209,7 +227,7 @@ export default function MensalDayDemandsPanel({
         </button>
       </div>
 
-      <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3">
+      <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
         {!showAddForm ? (
           <button
             type="button"
@@ -220,7 +238,7 @@ export default function MensalDayDemandsPanel({
             Nova demanda
           </button>
         ) : (
-          <div className="shrink-0 space-y-3 rounded-xl border border-zinc-200/90 bg-zinc-100/70 p-3 dark:border-white/10 dark:bg-black/25">
+          <div className="max-h-[62vh] shrink-0 space-y-3 overflow-y-auto rounded-xl border border-zinc-200/90 bg-zinc-100/70 p-3 dark:border-white/10 dark:bg-black/25 lg:max-h-none">
             <div>
               <label
                 htmlFor="demand-title"
@@ -273,6 +291,24 @@ export default function MensalDayDemandsPanel({
                 placeholder="Detalhes, links, contexto..."
                 className="w-full resize-none rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
               />
+            </div>
+            <div>
+              <label
+                htmlFor="demand-priority"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500"
+              >
+                Prioridade
+              </label>
+              <select
+                id="demand-priority"
+                value={newDemandPriority}
+                onChange={(event) => onNewDemandPriorityChange(event.target.value as 'baixa' | 'media' | 'importante')}
+                className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+              >
+                <option value="baixa">Baixa (Azul)</option>
+                <option value="media">Média (Laranja)</option>
+                <option value="importante">Importante (Vermelho)</option>
+              </select>
             </div>
             <div>
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
@@ -370,6 +406,7 @@ export default function MensalDayDemandsPanel({
                       </p>
                       <p className="mt-0.5 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
                         {demand.category || 'geral'}
+                        {demand.priority ? ` · ${demand.priority}` : ''}
                         {demandHasTimeRange(demand)
                           ? ` · ${demand.startTime}–${demand.endTime}`
                           : ''}
@@ -409,7 +446,7 @@ export default function MensalDayDemandsPanel({
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-demand-dialog-title"
-            className="relative z-[101] w-full max-w-lg rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-xl shadow-zinc-400/15 dark:border-white/15 dark:bg-zinc-950 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_80px_rgba(0,0,0,0.65)]"
+            className="relative z-[101] max-h-[86vh] w-[min(92vw,380px)] overflow-y-auto rounded-xl border border-zinc-200/90 bg-white p-3 shadow-xl shadow-zinc-400/15 dark:border-white/15 dark:bg-zinc-950 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_80px_rgba(0,0,0,0.65)]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -431,7 +468,7 @@ export default function MensalDayDemandsPanel({
               </button>
             </div>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-2.5 space-y-2">
               <div>
                 <label
                   htmlFor="edit-demand-title"
@@ -478,9 +515,27 @@ export default function MensalDayDemandsPanel({
                   id="edit-demand-note"
                   value={editNote}
                   onChange={(event) => setEditNote(event.target.value)}
-                  rows={4}
+                  rows={2}
                   className="w-full resize-none rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
                 />
+              </div>
+              <div>
+                <label
+                  htmlFor="edit-demand-priority"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
+                >
+                  Prioridade
+                </label>
+                <select
+                  id="edit-demand-priority"
+                  value={editPriority}
+                  onChange={(event) => setEditPriority(event.target.value as 'baixa' | 'media' | 'importante')}
+                  className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                >
+                  <option value="baixa">Baixa (Azul)</option>
+                  <option value="media">Média (Laranja)</option>
+                  <option value="importante">Importante (Vermelho)</option>
+                </select>
               </div>
               <div>
                 <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500">

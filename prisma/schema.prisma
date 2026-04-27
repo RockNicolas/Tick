@@ -34,6 +34,8 @@ model DayDemand {
   title     String
   category  String   @default("geral")
   note      String   @default("")
+  color     String   @default("#f59e0b")
+  priority  String   @default("media")
   /// Horário local "HH:mm" para exibição na grade semanal (opcional).
   startTime String?
   endTime   String?
