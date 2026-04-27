@@ -341,7 +341,9 @@ export default function MensalDayDemandsPanel({
                 </div>
               </div>
               <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500">
-                Preencha início e fim para o item aparecer na grade Semana.
+                Preencha início e fim para o item aparecer na grade Semana. O horário de{' '}
+                <span className="font-medium text-zinc-600 dark:text-zinc-400">fim</span> é quando a
+                demanda termina (ex.: 13:00–16:00 desenha do traço do 13h até o traço do 16h).
               </p>
             </div>
             <div className="flex gap-2">
@@ -558,6 +560,9 @@ export default function MensalDayDemandsPanel({
                     aria-label="Hora fim"
                   />
                 </div>
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500">
+                  Fim = horário de término na semana (a barra vai até esse horário).
+                </p>
               </div>
               <div className="flex gap-2 pt-1 md:col-span-2">
                 <button

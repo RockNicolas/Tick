@@ -182,14 +182,29 @@ function normalizeDemandTime(raw) {
   if (typeof raw !== 'string') return null
   const s = raw.trim()
   if (!s) return null
-  const match = /^(\d{1,2}):(\d{2})$/.exec(s)
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(s)
   if (!match) return null
   const h = Number(match[1])
   const min = Number(match[2])
-  if (!Number.isFinite(h) || !Number.isFinite(min) || h < 0 || h > 23 || min < 0 || min > 59) {
+  const sec = match[3] != null ? Number(match[3]) : 0
+  if (
+    !Number.isFinite(h) ||
+    !Number.isFinite(min) ||
+    !Number.isFinite(sec) ||
+    h < 0 ||
+    h > 23 ||
+    min < 0 ||
+    min > 59 ||
+    sec < 0 ||
+    sec > 59
+  ) {
     return null
   }
-  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`
+  let total = h * 3600 + min * 60 + sec
+  if (total >= 24 * 3600) total = 24 * 3600 - 1
+  const hh = Math.floor(total / 3600)
+  const mm = Math.floor((total % 3600) / 60)
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
 }
 
 function demandTimeToMinutes(value) {

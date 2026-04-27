@@ -1,13 +1,14 @@
 import {
   BookOpen,
   CalendarDays,
+  LayoutGrid,
   LayoutList,
-  ListTodo,
+  PanelsTopLeft,
   Plus,
   Target,
   Wallet,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   dateKeyFromDate,
@@ -22,6 +23,7 @@ import {
 } from '../lib/timeRange'
 
 type PeriodId = 'inteiro' | 'manha' | 'tarde' | 'noite'
+type WeekViewMode = 'grade' | 'grade-lista'
 
 const PERIOD_LABELS: Array<{ id: PeriodId; label: string }> = [
   { id: 'manha', label: 'Manhã' },
@@ -44,28 +46,36 @@ function periodToViewRange(id: PeriodId): { startMin: number; endMin: number } {
   }
 }
 
-function categoryStyle(cat: string): { wrap: string; icon: typeof Target } {
+function categoryStyle(cat: string): {
+  body: string
+  stripe: string
+  icon: typeof Target
+} {
   const c = (cat || 'geral').toLowerCase()
   if (c === 'fitness') {
     return {
-      wrap: 'border-emerald-400/35 bg-emerald-500/20 text-emerald-100',
+      body: 'border-emerald-400/35 bg-emerald-500/18 text-emerald-100',
+      stripe: 'bg-emerald-400/95',
       icon: Target,
     }
   }
   if (c === 'financas') {
     return {
-      wrap: 'border-amber-400/35 bg-amber-500/20 text-amber-100',
+      body: 'border-amber-400/35 bg-amber-500/18 text-amber-100',
+      stripe: 'bg-amber-400/95',
       icon: Wallet,
     }
   }
   if (c === 'leitura') {
     return {
-      wrap: 'border-violet-400/35 bg-violet-500/20 text-violet-100',
+      body: 'border-violet-400/35 bg-violet-500/18 text-violet-100',
+      stripe: 'bg-violet-400/95',
       icon: BookOpen,
     }
   }
   return {
-    wrap: 'border-sky-400/30 bg-sky-500/15 text-sky-100',
+    body: 'border-sky-400/30 bg-sky-500/16 text-sky-100',
+    stripe: 'bg-sky-400/95',
     icon: LayoutList,
   }
 }
@@ -74,11 +84,32 @@ function weekDayLetters(): string[] {
   return ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 }
 
+/** Posição vertical em px dentro da coluna (0 = topo da faixa de horários = `viewStart`). */
+function demandBlockLayoutPx(
+  clip: { start: number; end: number },
+  viewStart: number,
+  viewTotalMin: number,
+  timelineHeightPx: number,
+): { topPx: number; heightPx: number } | null {
+  if (timelineHeightPx <= 0 || !Number.isFinite(timelineHeightPx)) return null
+  const pxPerMin = timelineHeightPx / viewTotalMin
+  const topPx = (clip.start - viewStart) * pxPerMin
+  const rawH = (clip.end - clip.start) * pxPerMin
+  const minOneMinutePx = (60 / viewTotalMin) * timelineHeightPx
+  const maxH = Math.max(0, timelineHeightPx - topPx)
+  const heightPx = Math.min(Math.max(rawH, minOneMinutePx, 6), maxH)
+  if (heightPx < 1) return null
+  return { topPx, heightPx }
+}
+
 export default function SemanaPage() {
   const [period, setPeriod] = useState<PeriodId>('inteiro')
+  const [viewMode, setViewMode] = useState<WeekViewMode>('grade')
   const [byDate, setByDate] = useState<DemandsByDate>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [timelineHeightPx, setTimelineHeightPx] = useState(0)
+  const timelineBodyRef = useRef<HTMLDivElement>(null)
 
   const weekStart = useMemo(() => {
     const ref = new Date()
@@ -111,6 +142,34 @@ export default function SemanaPage() {
     return out
   }, [viewStart, viewEnd])
 
+  const weekTimedFlat = useMemo(() => {
+    const out: Array<{
+      dateKey: string
+      title: string
+      startTime: string
+      endTime: string
+      done: boolean
+    }> = []
+    for (const { dateKey } of weekDays) {
+      for (const d of byDate[dateKey] ?? []) {
+        if (!demandHasTimeRange(d)) continue
+        out.push({
+          dateKey,
+          title: d.title,
+          startTime: d.startTime!,
+          endTime: d.endTime!,
+          done: Boolean(d.done),
+        })
+      }
+    }
+    out.sort((a, b) => {
+      const dk = a.dateKey.localeCompare(b.dateKey)
+      if (dk !== 0) return dk
+      return a.startTime.localeCompare(b.startTime)
+    })
+    return out
+  }, [weekDays, byDate])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
@@ -129,17 +188,65 @@ export default function SemanaPage() {
     void load()
   }, [load])
 
+  useLayoutEffect(() => {
+    if (loading) return
+    const el = timelineBodyRef.current
+    if (!el) return
+    const measure = () => {
+      const h = el.getBoundingClientRect().height
+      if (h > 0) setTimelineHeightPx(h)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [loading, period, viewMode, hourLabels.length, byDate])
+
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-3 sm:gap-4">
-      <div className="flex shrink-0 min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
+      <div className="flex shrink-0 min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 space-y-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-3xl">
             <CalendarDays className="h-7 w-7 shrink-0 text-red-400 sm:h-8 sm:w-8" />
             <span className="min-w-0">Semana</span>
           </div>
+          <p className="max-w-prose text-sm leading-snug text-zinc-600 dark:text-zinc-400">
+            Visão semanal da sua agenda.
+          </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-3 sm:justify-end">
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+              Exibir
+            </span>
+            <div className="inline-flex flex-wrap gap-1 rounded-lg border border-zinc-300/80 p-0.5 dark:border-white/15">
+              <button
+                type="button"
+                onClick={() => setViewMode('grade')}
+                className={
+                  viewMode === 'grade'
+                    ? 'inline-flex items-center gap-1 rounded-md bg-zinc-200/90 px-2 py-1 text-xs font-medium text-zinc-900 dark:bg-white/15 dark:text-zinc-100'
+                    : 'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400'
+                }
+              >
+                <LayoutGrid className="h-3.5 w-3.5 opacity-90" aria-hidden />
+                Grade
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grade-lista')}
+                className={
+                  viewMode === 'grade-lista'
+                    ? 'inline-flex items-center gap-1 rounded-md bg-zinc-200/90 px-2 py-1 text-xs font-medium text-zinc-900 dark:bg-white/15 dark:text-zinc-100'
+                    : 'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400'
+                }
+              >
+                <PanelsTopLeft className="h-3.5 w-3.5 opacity-90" aria-hidden />
+                Grade/Lista
+              </button>
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
               Período
@@ -186,7 +293,17 @@ export default function SemanaPage() {
               ))}
             </div>
 
-            <div className="flex min-h-0 min-w-[640px] flex-1 overflow-x-auto overflow-y-hidden">
+            <div
+              className={
+                viewMode === 'grade-lista'
+                  ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
+                  : 'flex min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden'
+              }
+            >
+              <div
+                ref={timelineBodyRef}
+                className="flex min-h-0 min-w-[640px] flex-1 flex-row self-stretch"
+              >
               <div className="sticky left-0 z-10 flex w-14 shrink-0 flex-col self-stretch border-r border-zinc-200/80 bg-white/95 dark:border-white/10 dark:bg-zinc-950/95">
                 {hourLabels.map((h) => (
                   <div
@@ -208,57 +325,70 @@ export default function SemanaPage() {
                   return (
                     <div
                       key={dateKey}
-                      className="relative flex min-h-0 min-w-0 flex-1 flex-col border-l border-zinc-200/70 first:border-l-0 dark:border-white/10"
+                      className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 border-l border-zinc-200/70 first:border-l-0 dark:border-white/10"
+                      style={{
+                        gridTemplateRows: `repeat(${hourLabels.length}, minmax(0, 1fr))`,
+                      }}
                       aria-label={`Demandas do dia ${dateKey}`}
                     >
-                      {hourLabels.map((h) => (
+                      {hourLabels.map((h, i) => (
                         <div
                           key={`${dateKey}-${h}`}
-                          className="min-h-0 flex-1 border-b border-zinc-200/50 dark:border-white/[0.06]"
+                          className="pointer-events-none relative z-0 min-h-0 border-b border-zinc-200/50 dark:border-white/[0.06]"
+                          style={{ gridColumn: 1, gridRow: i + 1 }}
                         />
                       ))}
 
-                      <div className="pointer-events-none absolute inset-0">
+                      <div className="pointer-events-none absolute inset-0 z-10 min-h-0 overflow-hidden">
                         {timed.map(({ d, index }) => {
                           const startMin = parseHHmmToMinutes(d.startTime)!
                           const endMin = parseHHmmToMinutes(d.endTime)!
                           const clip = clipMinutesToView(startMin, endMin, viewStart, viewEnd)
                           if (!clip) return null
-                          const topPct = ((clip.start - viewStart) / viewTotalMin) * 100
-                          const hPct = ((clip.end - clip.start) / viewTotalMin) * 100
-                          const { wrap, icon: Icon } = categoryStyle(d.category)
+                          const layout = demandBlockLayoutPx(
+                            clip,
+                            viewStart,
+                            viewTotalMin,
+                            timelineHeightPx,
+                          )
+                          if (!layout) return null
+                          const { topPx, heightPx } = layout
+                          const { body, stripe, icon: Icon } = categoryStyle(d.category)
                           const customColor = typeof d.color === 'string' ? d.color.trim() : ''
                           const hasCustomColor = /^#[0-9a-f]{6}$/i.test(customColor)
                           return (
                             <div
                               key={`${dateKey}-${index}-${d.title}`}
-                              className="pointer-events-auto absolute left-0.5 right-0.5 overflow-hidden rounded-lg border px-1 py-0.5 text-[11px] leading-tight shadow-sm backdrop-blur-sm sm:left-1 sm:right-1 sm:px-1.5 sm:py-1 sm:text-xs"
+                              className="pointer-events-auto box-border absolute left-0.5 right-0.5 overflow-hidden rounded-lg border px-1 py-0.5 text-[11px] leading-tight shadow-sm backdrop-blur-sm sm:left-1 sm:right-1 sm:px-1.5 sm:py-1 sm:text-xs"
                               style={{
-                                top: `${topPct}%`,
-                                height: `${Math.max(hPct, 6)}%`,
+                                top: `${topPx}px`,
+                                height: `${heightPx}px`,
                                 zIndex: 2 + index,
                               }}
                               title={`${d.startTime}–${d.endTime}`}
                             >
                               <div
-                                className={`flex h-full min-h-0 flex-col gap-0.5 rounded-md border ${hasCustomColor ? 'text-white' : wrap} ${d.done ? 'opacity-50' : ''}`}
+                                className={`flex h-full min-h-0 overflow-hidden rounded-md border ${hasCustomColor ? 'text-white' : body} ${d.done ? 'opacity-50' : ''}`}
                                 style={
                                   hasCustomColor
                                     ? {
                                         borderColor: customColor,
-                                        backgroundColor: `${customColor}40`,
+                                        backgroundColor: `${customColor}2e`,
                                       }
                                     : undefined
                                 }
                               >
-                                <div className="flex min-w-0 items-start gap-1">
+                                <span
+                                  className={`h-full w-1.5 shrink-0 ${stripe}`}
+                                  style={hasCustomColor ? { backgroundColor: customColor } : undefined}
+                                  aria-hidden
+                                />
+                                <div className="flex min-w-0 flex-1 items-start gap-1 px-1 py-0.5 sm:px-1.5">
                                   <Icon className="mt-0.5 h-3 w-3 shrink-0 opacity-90" aria-hidden />
-                                  <span className="min-w-0 truncate font-medium">{d.title}</span>
+                                  <span className="min-w-0 flex-1 truncate font-medium leading-snug">
+                                    {d.title}
+                                  </span>
                                 </div>
-                                <span className="flex items-center gap-1 text-[10px] opacity-90">
-                                  <ListTodo className="h-3 w-3 shrink-0" aria-hidden />
-                                  Simple
-                                </span>
                               </div>
                             </div>
                           )
@@ -268,6 +398,36 @@ export default function SemanaPage() {
                   )
                 })}
               </div>
+              </div>
+
+              {viewMode === 'grade-lista' ? (
+                <div className="shrink-0 border-t border-zinc-200/80 bg-white/90 dark:border-white/10 dark:bg-zinc-950/90">
+                  <p className="border-b border-zinc-200/70 px-3 py-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:border-white/10 dark:text-zinc-500">
+                    Lista da semana (com horário)
+                  </p>
+                  <ul className="max-h-[min(40vh,14rem)] min-h-0 overflow-y-auto px-2 py-2">
+                    {weekTimedFlat.length === 0 ? (
+                      <li className="px-2 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+                        Nenhum item com horário nesta semana.
+                      </li>
+                    ) : (
+                      weekTimedFlat.map((row) => (
+                        <li
+                          key={`${row.dateKey}-${row.startTime}-${row.title}`}
+                          className="flex min-w-0 items-center justify-between gap-2 border-b border-zinc-200/50 py-2 text-sm last:border-b-0 dark:border-white/[0.06]"
+                        >
+                          <span className="min-w-0 truncate font-medium text-zinc-800 dark:text-zinc-100">
+                            {row.title}
+                          </span>
+                          <span className="shrink-0 tabular-nums text-xs text-zinc-500 dark:text-zinc-400">
+                            {row.dateKey.slice(5)} · {row.startTime}–{row.endTime}
+                          </span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              ) : null}
             </div>
 
           </div>
