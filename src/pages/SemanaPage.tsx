@@ -1,8 +1,6 @@
 import {
   BookOpen,
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
   LayoutList,
   ListTodo,
   Plus,
@@ -17,7 +15,6 @@ import {
   type DemandsByDate,
   startOfWeekSunday,
 } from '../api/dayDemands'
-import type { MonthlyDemand } from '../components/MensalDayDemandsPanel'
 import {
   clipMinutesToView,
   demandHasTimeRange,
@@ -25,7 +22,6 @@ import {
 } from '../lib/timeRange'
 
 type PeriodId = 'inteiro' | 'manha' | 'tarde' | 'noite'
-type ViewMode = 'grade' | 'grade-list'
 
 const PERIOD_LABELS: Array<{ id: PeriodId; label: string }> = [
   { id: 'manha', label: 'Manhã' },
@@ -79,9 +75,7 @@ function weekDayLetters(): string[] {
 }
 
 export default function SemanaPage() {
-  const [weekOffset, setWeekOffset] = useState(0)
   const [period, setPeriod] = useState<PeriodId>('inteiro')
-  const [viewMode, setViewMode] = useState<ViewMode>('grade')
   const [byDate, setByDate] = useState<DemandsByDate>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -89,9 +83,8 @@ export default function SemanaPage() {
   const weekStart = useMemo(() => {
     const ref = new Date()
     ref.setHours(12, 0, 0, 0)
-    ref.setDate(ref.getDate() + weekOffset * 7)
     return startOfWeekSunday(ref)
-  }, [weekOffset])
+  }, [])
 
   const weekDays = useMemo(() => {
     const letters = weekDayLetters()
@@ -136,23 +129,6 @@ export default function SemanaPage() {
     void load()
   }, [load])
 
-  const weekLabel = useMemo(() => {
-    const a = weekDays[0]?.date
-    const b = weekDays[6]?.date
-    if (!a || !b) return ''
-    const fmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' })
-    return `${fmt.format(a)} – ${fmt.format(b)}`
-  }, [weekDays])
-
-  const untimedByDay = useMemo(() => {
-    const map: Record<string, MonthlyDemand[]> = {}
-    for (const { dateKey } of weekDays) {
-      const list = byDate[dateKey] ?? []
-      map[dateKey] = list.filter((d) => !demandHasTimeRange(d))
-    }
-    return map
-  }, [byDate, weekDays])
-
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-3 sm:gap-4">
       <div className="flex shrink-0 min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -161,67 +137,9 @@ export default function SemanaPage() {
             <CalendarDays className="h-7 w-7 shrink-0 text-red-400 sm:h-8 sm:w-8" />
             <span className="min-w-0">Semana</span>
           </div>
-          <p className="mt-1 max-w-prose text-sm leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-base">
-            Visão semanal da sua agenda
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setWeekOffset((w) => w - 1)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-300/80 text-zinc-700 transition hover:bg-zinc-100 dark:border-white/15 dark:text-zinc-200 dark:hover:bg-white/10"
-              aria-label="Semana anterior"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setWeekOffset(0)}
-              className="rounded-lg border border-zinc-300/80 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-white/15 dark:text-zinc-200 dark:hover:bg-white/10"
-            >
-              Hoje
-            </button>
-            <button
-              type="button"
-              onClick={() => setWeekOffset((w) => w + 1)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-300/80 text-zinc-700 transition hover:bg-zinc-100 dark:border-white/15 dark:text-zinc-200 dark:hover:bg-white/10"
-              aria-label="Próxima semana"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-            <span className="text-sm text-zinc-500 dark:text-zinc-400">{weekLabel}</span>
-          </div>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-              Exibir
-            </span>
-            <div className="inline-flex rounded-lg border border-zinc-300/80 p-0.5 dark:border-white/15">
-              <button
-                type="button"
-                onClick={() => setViewMode('grade')}
-                className={
-                  viewMode === 'grade'
-                    ? 'rounded-md bg-zinc-200/90 px-2.5 py-1 text-xs font-medium text-zinc-900 dark:bg-white/15 dark:text-zinc-100'
-                    : 'rounded-md px-2.5 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400'
-                }
-              >
-                Grade
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('grade-list')}
-                className={
-                  viewMode === 'grade-list'
-                    ? 'rounded-md bg-zinc-200/90 px-2.5 py-1 text-xs font-medium text-zinc-900 dark:bg-white/15 dark:text-zinc-100'
-                    : 'rounded-md px-2.5 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400'
-                }
-              >
-                Grade/Lista
-              </button>
-            </div>
-          </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-3 sm:justify-end">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
               Período
@@ -352,34 +270,6 @@ export default function SemanaPage() {
               </div>
             </div>
 
-            {viewMode === 'grade-list' ? (
-              <div className="max-h-[min(36vh,260px)] shrink-0 overflow-y-auto border-t border-zinc-200/80 bg-zinc-50/80 p-3 dark:border-white/10 dark:bg-black/50">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                  Sem horário (cadastre início e fim no Mensal para aparecer na grade)
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {weekDays.map(({ dateKey, header }) => {
-                    const list = untimedByDay[dateKey] ?? []
-                    if (list.length === 0) return null
-                    return (
-                      <div key={dateKey} className="rounded-xl border border-zinc-200/80 bg-white/90 p-2 dark:border-white/10 dark:bg-zinc-950/80">
-                        <p className="mb-1 text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                          {header} · {dateKey.slice(8)}/
-                          {dateKey.slice(5, 7)}
-                        </p>
-                        <ul className="space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
-                          {list.map((item, i) => (
-                            <li key={`${dateKey}-u-${i}`} className="truncate">
-                              {item.done ? <span className="line-through opacity-60">{item.title}</span> : item.title}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ) : null}
           </div>
         )}
 
