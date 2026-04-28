@@ -1,22 +1,16 @@
 import {
-  Focus,
-  NotepadText,
-  Trophy,
   UserRound,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { fetchDayDemandsForMonth } from '../api/dayDemands'
 import { fetchGoals, type Goal } from '../api/goals'
-import SettingsSectionCard from '../components/settings/SettingsSectionCard'
+import PerfilIdentidadeFocoCard from '../components/perfil/PerfilIdentidadeFocoCard'
+import PerfilListaDesejosCard, { type WishItem } from '../components/perfil/PerfilListaDesejosCard'
+import PerfilResumoProgressoCard, { type MonthlyCategoryStat } from '../components/perfil/PerfilResumoProgressoCard'
+import PerfilResumoRapidoCard from '../components/perfil/PerfilResumoRapidoCard'
+import PerfilTopMetasCard from '../components/perfil/PerfilTopMetasCard'
 import { categoryDisplayLabel } from '../lib/categoryOptions'
 import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
-
-type MonthlyCategoryStat = {
-  category: string
-  label: string
-  count: number
-  percent: number
-}
 
 const FIXED_GOAL_CATEGORIES = [
   { key: 'fitness', label: 'Fitness' },
@@ -39,7 +33,6 @@ export default function PerfilPage() {
   const userEmail = user?.email ?? 'usuario@tick.app'
   const initials = getUserInitials(userName)
   const [activeGoalsCount, setActiveGoalsCount] = useState(0)
-  const [activeGoalsProgressAvg, setActiveGoalsProgressAvg] = useState(0)
   const [highProgressGoalsCount, setHighProgressGoalsCount] = useState(0)
   const [topMonthlyGoals, setTopMonthlyGoals] = useState<Goal[]>([])
   const [monthlyDoneCount, setMonthlyDoneCount] = useState(0)
@@ -47,6 +40,34 @@ export default function PerfilPage() {
   const [monthlyCompletionRate, setMonthlyCompletionRate] = useState(0)
   const [monthlyFocus, setMonthlyFocus] = useState('sem foco definido')
   const [monthlyCategoryStats, setMonthlyCategoryStats] = useState<MonthlyCategoryStat[]>([])
+  const [wishItems, setWishItems] = useState<WishItem[]>([])
+  const [newWishTitle, setNewWishTitle] = useState('')
+  const [newWishPrice, setNewWishPrice] = useState('')
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('tick:wishlist')
+      if (!raw) return
+      const parsed = JSON.parse(raw) as WishItem[]
+      if (!Array.isArray(parsed)) return
+      const sanitized = parsed
+        .filter((item) => item && typeof item.title === 'string')
+        .map((item) => ({
+          id: String(item.id || crypto.randomUUID()),
+          title: item.title.trim(),
+          price: typeof item.price === 'string' ? item.price : '',
+          done: Boolean(item.done),
+        }))
+        .filter((item) => item.title.length > 0)
+      setWishItems(sanitized)
+    } catch {
+      setWishItems([])
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('tick:wishlist', JSON.stringify(wishItems))
+  }, [wishItems])
 
   useEffect(() => {
     let cancelled = false
@@ -58,11 +79,6 @@ export default function PerfilPage() {
         if (cancelled) return
 
         setActiveGoalsCount(activeGoals.length)
-        const avgProgress =
-          activeGoals.length > 0
-            ? Math.round(activeGoals.reduce((sum, goal) => sum + goal.progress, 0) / activeGoals.length)
-            : 0
-        setActiveGoalsProgressAvg(avgProgress)
         setHighProgressGoalsCount(activeGoals.filter((goal) => goal.progress >= 70).length)
         setTopMonthlyGoals(
           [...activeGoals]
@@ -121,7 +137,6 @@ export default function PerfilPage() {
       } catch {
         if (cancelled) return
         setActiveGoalsCount(0)
-        setActiveGoalsProgressAvg(0)
         setHighProgressGoalsCount(0)
         setTopMonthlyGoals([])
         setMonthlyDoneCount(0)
@@ -146,112 +161,50 @@ export default function PerfilPage() {
         <span className="min-w-0">Perfil de usuário</span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr]">
-        <SettingsSectionCard title="Identidade e foco" icon={Focus}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="inline-flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-zinc-300/80 bg-zinc-100 text-xl font-semibold text-zinc-800 dark:border-white/15 dark:bg-white/10 dark:text-zinc-100">
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-100">{userName}</p>
-              <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">{userEmail}</p>
-              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">Membro desde abril de 2026</p>
-            </div>
-          </div>
-        </SettingsSectionCard>
-        <SettingsSectionCard title="Resumo rápido" icon={Trophy}>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Metas ativas</p>
-              <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{activeGoalsCount}</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Taxa mensal</p>
-              <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{monthlyCompletionRate}%</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Foco</p>
-              <p className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-100">{monthlyFocus}</p>
-            </div>
-          </div>
-        </SettingsSectionCard>
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+        <PerfilIdentidadeFocoCard initials={initials} userName={userName} userEmail={userEmail} />
+        <PerfilResumoRapidoCard
+          activeGoalsCount={activeGoalsCount}
+          monthlyCompletionRate={monthlyCompletionRate}
+          monthlyFocus={monthlyFocus}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <SettingsSectionCard title="Resumo do progresso" icon={Trophy}>
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Média global</p>
-                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                  {monthlyCompletionRate}%
-                </p>
-              </div>
-              <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Bom avanço</p>
-                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                  {highProgressGoalsCount}
-                </p>
-              </div>
-              <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Exigem foco</p>
-                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                  {Math.max(0, activeGoalsCount - highProgressGoalsCount)}
-                </p>
-              </div>
-            </div>
+        <PerfilResumoProgressoCard
+          monthlyCompletionRate={monthlyCompletionRate}
+          highProgressGoalsCount={highProgressGoalsCount}
+          activeGoalsCount={activeGoalsCount}
+          monthlyDoneCount={monthlyDoneCount}
+          monthlyTotalCount={monthlyTotalCount}
+          monthlyCategoryStats={monthlyCategoryStats}
+        />
 
-            <div>
-              <div className="mb-1 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                <span>Evolução mensal</span>
-                <span>
-                  {monthlyDoneCount}/{monthlyTotalCount}
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-zinc-200/80 dark:bg-white/10">
-                <div
-                  className="h-2 rounded-full bg-emerald-500 transition-all"
-                  style={{ width: `${Math.max(0, Math.min(100, monthlyCompletionRate))}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-zinc-200/80 bg-white/60 p-2 dark:border-white/10 dark:bg-white/5">
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                Categorias do mês: {monthlyCategoryStats.map((item) => item.label).join(' · ')}
-              </p>
-            </div>
-          </div>
-        </SettingsSectionCard>
-
-        <SettingsSectionCard title="Top metas do mês" icon={NotepadText}>
-          <div className="space-y-2.5">
-            {topMonthlyGoals.length === 0 ? (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Você ainda não tem metas ativas neste mês.</p>
-            ) : (
-              topMonthlyGoals.map((goal) => (
-                <div
-                  key={goal.id}
-                  className="rounded-xl border border-zinc-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-white/5"
-                >
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{goal.title}</p>
-                    <p className="shrink-0 text-xs text-zinc-600 dark:text-zinc-400">{goal.progress}%</p>
-                  </div>
-                  <div className="h-2 rounded-full bg-zinc-200/80 dark:bg-white/10">
-                    <div
-                      className="h-2 rounded-full bg-emerald-500 transition-all"
-                      style={{ width: `${Math.max(0, Math.min(100, goal.progress))}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {categoryDisplayLabel(goal.category)} · {goal.progress >= 70 ? 'Quase lá!' : 'Em andamento'}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-        </SettingsSectionCard>
+        <div className="space-y-4">
+          <PerfilTopMetasCard topMonthlyGoals={topMonthlyGoals} />
+          <PerfilListaDesejosCard
+            wishItems={wishItems}
+            newWishTitle={newWishTitle}
+            newWishPrice={newWishPrice}
+            onNewWishTitleChange={setNewWishTitle}
+            onNewWishPriceChange={setNewWishPrice}
+            onAddWishItem={() => {
+              const title = newWishTitle.trim()
+              if (!title) return
+              setWishItems((prev) => [
+                ...prev,
+                { id: crypto.randomUUID(), title, price: newWishPrice.trim(), done: false },
+              ])
+              setNewWishTitle('')
+              setNewWishPrice('')
+            }}
+            onToggleWishItem={(id) =>
+              setWishItems((prev) =>
+                prev.map((entry) => (entry.id === id ? { ...entry, done: !entry.done } : entry)),
+              )
+            }
+          />
+        </div>
       </div>
     </div>
   )
