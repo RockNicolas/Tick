@@ -23,7 +23,7 @@ export default function PerfilWishlistMarcosCard({
   return (
     <section className="rounded-2xl border border-zinc-200/90 bg-white/70 p-4 shadow-sm dark:border-white/10 dark:bg-black/35">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Lista de desejos & marcos</h2>
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Lista de desejos</h2>
         <button
           type="button"
           onClick={onAddWishItem}

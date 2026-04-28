@@ -95,7 +95,7 @@ export default function PerfilPage() {
             const goals = aggregate?.goals ?? 0
             const avgPercent = goals > 0 ? Math.round((aggregate?.totalProgress ?? 0) / goals) : 0
             return { category: key, label, percent: avgPercent, color }
-          }),
+          }), 
         )
 
         const now = new Date()
@@ -155,23 +155,30 @@ export default function PerfilPage() {
   }, [monthlyCategoryStats])
 
   return (
-    <div className="min-w-0 space-y-4">
+    <div className="min-w-0 space-y-4 overflow-x-hidden">
       <div className="flex min-w-0 items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-3xl">
         <UserRound className="h-7 w-7 shrink-0 text-zinc-700 dark:text-zinc-300" />
         <span>Perfil de usuário</span>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[220px_1fr_300px]">
-        <PerfilHeroCard initials={initials} userName={userName} userEmail={userEmail} />
-        <PerfilPerformanceHubCard
-          monthlyCompletionRate={monthlyCompletionRate}
-          monthlyCategoryStats={monthlyCategoryStats}
-          chartPercents={chartPercents}
-          weakestCategory={weakestCategory}
-          monthlyFocus={monthlyFocus}
-        />
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[220px_minmax(0,1fr)_280px]">
+        <div>
+          <PerfilHeroCard initials={initials} userName={userName} userEmail={userEmail} />
+          <div className="pt-11">
+            <PerfilConquistasCard doneWishCount={doneWishCount} />
+          </div>
+        </div>
+        <div className="min-w-0">
+          <PerfilPerformanceHubCard
+            monthlyCompletionRate={monthlyCompletionRate}
+            monthlyCategoryStats={monthlyCategoryStats}
+            chartPercents={chartPercents}
+            weakestCategory={weakestCategory}
+            monthlyFocus={monthlyFocus}
+          />
+        </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0">
           <PerfilWishlistMarcosCard
             wishItems={wishItems}
             newWishTitle={newWishTitle}
@@ -194,7 +201,6 @@ export default function PerfilPage() {
               )
             }
           />
-          <PerfilConquistasCard doneWishCount={doneWishCount} />
         </div>
       </div>
     </div>
