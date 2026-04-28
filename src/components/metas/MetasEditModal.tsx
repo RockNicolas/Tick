@@ -1,5 +1,11 @@
 import type { Goal } from '../../api/goals'
-import type { FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import {
+  FIXED_CATEGORIES,
+  canonicalCategoryId,
+  customCategoryName,
+  type FixedCategoryId,
+} from '../../lib/categoryOptions'
 
 type MetasEditModalProps = {
   goal: Goal | null
@@ -32,6 +38,30 @@ export default function MetasEditModal({
   onSubmit,
   onDelete,
 }: MetasEditModalProps) {
+  const [selectedCategory, setSelectedCategory] = useState<FixedCategoryId>(
+    canonicalCategoryId(editCategory),
+  )
+  const [customCategory, setCustomCategory] = useState(customCategoryName(editCategory))
+
+  useEffect(() => {
+    setSelectedCategory(canonicalCategoryId(editCategory))
+    setCustomCategory(customCategoryName(editCategory))
+  }, [editCategory])
+
+  function handleCategorySelect(next: FixedCategoryId) {
+    setSelectedCategory(next)
+    if (next === 'outros') {
+      onEditCategoryChange(customCategory.trim() || 'geral')
+      return
+    }
+    onEditCategoryChange(next)
+  }
+
+  function handleCustomCategoryChange(value: string) {
+    setCustomCategory(value)
+    onEditCategoryChange(value.trim() || 'geral')
+  }
+
   if (!goal) return null
 
   return (
@@ -53,12 +83,36 @@ export default function MetasEditModal({
           required
           className="min-h-10 w-full rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-900 outline-none focus:border-teal-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
         />
-        <input
-          value={editCategory}
-          onChange={(event) => onEditCategoryChange(event.target.value)}
-          required
-          className="min-h-10 w-full rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-900 outline-none focus:border-teal-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
-        />
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            {FIXED_CATEGORIES.map((item) => {
+              const isActive = selectedCategory === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleCategorySelect(item.id)}
+                  className={
+                    isActive
+                      ? 'min-h-10 rounded-xl border border-teal-300/60 bg-teal-400/20 px-3 text-sm font-medium text-zinc-900 dark:text-zinc-100'
+                      : 'min-h-10 rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200 dark:hover:bg-white/15'
+                  }
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+          {selectedCategory === 'outros' ? (
+            <input
+              value={customCategory}
+              onChange={(event) => handleCustomCategoryChange(event.target.value)}
+              placeholder="Nome da categoria"
+              required
+              className="min-h-10 w-full rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-900 outline-none focus:border-teal-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
+            />
+          ) : null}
+        </div>
         <input
           value={editTargetCount}
           onChange={(event) => onEditTargetCountChange(Number(event.target.value))}

@@ -1,4 +1,4 @@
-import { BookOpen, LayoutList, Target, Wallet } from 'lucide-react'
+import { BookOpen, Dumbbell, HandCoins, Tag } from 'lucide-react'
 import { useMemo } from 'react'
 import type { DemandsByDate } from '../../api/dayDemands'
 import {
@@ -13,34 +13,34 @@ type WeekDay = { dateKey: string; header: string }
 function categoryStyle(cat: string): {
   body: string
   stripe: string
-  icon: typeof Target
+  icon: typeof Dumbbell
 } {
   const c = (cat || 'geral').toLowerCase()
   if (c === 'fitness') {
     return {
-      body: 'border-emerald-400/35 bg-emerald-500/18 text-emerald-100',
+      body: 'border-emerald-400/35 bg-emerald-500/18 text-zinc-900 dark:text-emerald-100',
       stripe: 'bg-emerald-400/95',
-      icon: Target,
+      icon: Dumbbell,
     }
   }
-  if (c === 'financas') {
+  if (c === 'financas' || c === 'finanças') {
     return {
-      body: 'border-amber-400/35 bg-amber-500/18 text-amber-100',
+      body: 'border-amber-400/35 bg-amber-500/18 text-zinc-900 dark:text-amber-100',
       stripe: 'bg-amber-400/95',
-      icon: Wallet,
+      icon: HandCoins,
     }
   }
   if (c === 'leitura') {
     return {
-      body: 'border-violet-400/35 bg-violet-500/18 text-violet-100',
+      body: 'border-violet-400/35 bg-violet-500/18 text-zinc-900 dark:text-violet-100',
       stripe: 'bg-violet-400/95',
       icon: BookOpen,
     }
   }
   return {
-    body: 'border-sky-400/30 bg-sky-500/16 text-sky-100',
+    body: 'border-sky-400/30 bg-sky-500/16 text-zinc-900 dark:text-sky-100',
     stripe: 'bg-sky-400/95',
-    icon: LayoutList,
+    icon: Tag,
   }
 }
 
@@ -152,7 +152,7 @@ export default function SemanaTimeline({
                           title={`${d.startTime}–${d.endTime}`}
                         >
                           <div
-                            className={`flex h-full min-h-0 overflow-hidden rounded-md border ${hasCustomColor ? 'text-white' : body} ${d.done ? 'opacity-50' : ''}`}
+                            className={`flex h-full min-h-0 overflow-hidden rounded-md border ${hasCustomColor ? 'text-zinc-900 dark:text-white' : body} ${d.done ? 'opacity-50' : ''}`}
                             style={
                               hasCustomColor
                                 ? {

@@ -1,5 +1,11 @@
 import { Plus } from 'lucide-react'
-import type { FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import {
+  FIXED_CATEGORIES,
+  canonicalCategoryId,
+  customCategoryName,
+  type FixedCategoryId,
+} from '../../lib/categoryOptions'
 
 type MetasCreateModalProps = {
   open: boolean
@@ -30,6 +36,28 @@ export default function MetasCreateModal({
   isSubmitting,
   onSubmit,
 }: MetasCreateModalProps) {
+  const [selectedCategory, setSelectedCategory] = useState<FixedCategoryId>(canonicalCategoryId(category))
+  const [customCategory, setCustomCategory] = useState(customCategoryName(category))
+
+  useEffect(() => {
+    setSelectedCategory(canonicalCategoryId(category))
+    setCustomCategory(customCategoryName(category))
+  }, [category])
+
+  function handleCategorySelect(next: FixedCategoryId) {
+    setSelectedCategory(next)
+    if (next === 'outros') {
+      onCategoryChange(customCategory.trim() || 'geral')
+      return
+    }
+    onCategoryChange(next)
+  }
+
+  function handleCustomCategoryChange(value: string) {
+    setCustomCategory(value)
+    onCategoryChange(value.trim() || 'geral')
+  }
+
   if (!open) return null
 
   return (
@@ -63,24 +91,41 @@ export default function MetasCreateModal({
             onChange={(event) => onTitleChange(event.target.value)}
             placeholder="Ex.: Ler 2 livros este mês"
             required
-            className="min-h-10 w-full rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-900 outline-none focus:border-teal-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
+            className="min-h-10 w-full rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-900 outline-none focus:border-teal-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100 dark:[color-scheme:dark]"
           />
         </div>
         <div className="space-y-1.5">
-          <label
-            htmlFor="goal-category"
-            className="text-xs font-medium tracking-wide text-zinc-700 uppercase dark:text-zinc-300"
-          >
+          <p className="text-xs font-medium tracking-wide text-zinc-700 uppercase dark:text-zinc-300">
             Categoria
-          </label>
-          <input
-            id="goal-category"
-            value={category}
-            onChange={(event) => onCategoryChange(event.target.value)}
-            placeholder="Ex.: academia"
-            required
-            className="min-h-10 w-full rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-900 outline-none focus:border-teal-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
-          />
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {FIXED_CATEGORIES.map((item) => {
+              const isActive = selectedCategory === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleCategorySelect(item.id)}
+                  className={
+                    isActive
+                      ? 'min-h-10 rounded-xl border border-teal-300/60 bg-teal-400/20 px-3 text-sm font-medium text-zinc-900 dark:text-zinc-100'
+                      : 'min-h-10 rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200 dark:hover:bg-white/15'
+                  }
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+          {selectedCategory === 'outros' ? (
+            <input
+              value={customCategory}
+              onChange={(event) => handleCustomCategoryChange(event.target.value)}
+              placeholder="Nome da categoria"
+              required
+              className="mt-2 min-h-10 w-full rounded-xl border border-zinc-300/80 bg-white/80 px-3 text-sm text-zinc-900 outline-none focus:border-teal-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
+            />
+          ) : null}
         </div>
         <div className="space-y-1.5">
           <label

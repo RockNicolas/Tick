@@ -1,37 +1,69 @@
-import { CircleEllipsis, Plus } from 'lucide-react'
-import type { Goal } from '../../api/goals'
-import { formatGoalDate } from '../../lib/goalFormat'
+import { Droplets, Minus, Plus } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 type MetasMilestonesColumnProps = {
-  milestones: Goal[]
   onAddClick: () => void
 }
 
-export default function MetasMilestonesColumn({ milestones, onAddClick }: MetasMilestonesColumnProps) {
+export default function MetasMilestonesColumn({ onAddClick }: MetasMilestonesColumnProps) {
+  const waterTarget = 8
+  const waterStorageKey = 'tick:water-goal'
+  const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const [waterCups, setWaterCups] = useState(0)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(waterStorageKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as { date?: string; cups?: number }
+      if (parsed?.date !== todayKey) return
+      const cups = Number(parsed?.cups ?? 0)
+      if (Number.isFinite(cups)) setWaterCups(Math.max(0, Math.min(waterTarget, Math.round(cups))))
+    } catch {
+      // no-op
+    }
+  }, [todayKey])
+
+  useEffect(() => {
+    localStorage.setItem(waterStorageKey, JSON.stringify({ date: todayKey, cups: waterCups }))
+  }, [todayKey, waterCups])
+
   return (
     <section className="flex flex-col gap-3">
-      <div className="rounded-2xl border border-zinc-200/70 bg-white/60 p-4 dark:border-white/10 dark:bg-black/30">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Milestones Importantes</h2>
-          <CircleEllipsis className="h-4 w-4 text-zinc-500 dark:text-zinc-400" aria-hidden />
+      <div className="rounded-2xl border border-zinc-200/70 bg-white/60 p-3 dark:border-white/10 dark:bg-black/30">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-14 w-14 flex-col items-center justify-center rounded-lg border border-zinc-300/70 bg-zinc-100/70 dark:border-white/10 dark:bg-white/5">
+              <span className="grid h-7 w-7 place-items-center rounded-full border border-cyan-300/40 bg-cyan-500/15">
+                <Droplets className="h-4 w-4 text-cyan-300" aria-hidden />
+              </span>
+              <span className="mt-0.5 text-[10px] font-medium text-zinc-700 dark:text-zinc-300">Agua</span>
+            </div>
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{waterCups} / {waterTarget}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setWaterCups((prev) => Math.max(0, prev - 1))}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-300/80 bg-white/80 text-zinc-800 transition hover:bg-zinc-100 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200 dark:hover:bg-white/15"
+              aria-label="Remover um copo de água"
+            >
+              <Minus className="h-4 w-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => setWaterCups((prev) => Math.min(waterTarget, prev + 1))}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/50 bg-cyan-300/20 text-cyan-800 transition hover:bg-cyan-300/30 dark:text-cyan-100"
+              aria-label="Adicionar um copo de água"
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
         </div>
-        <div className="space-y-2">
-          {milestones.length === 0 ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Sem milestones no momento.</p>
-          ) : (
-            milestones.map((goal) => (
-              <article
-                key={goal.id}
-                className="rounded-xl border border-zinc-200/80 bg-white/75 px-3 py-2 dark:border-white/10 dark:bg-white/5"
-              >
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{goal.title}</p>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">Prazo: {formatGoalDate(goal.dueDate)}</p>
-              </article>
-            ))
-          )}
+        <div className="mt-2 text-[11px] text-zinc-600 dark:text-zinc-400">
+          Meta extra da pagina de metas (sem agenda).
         </div>
       </div>
-
       <button
         type="button"
         onClick={onAddClick}

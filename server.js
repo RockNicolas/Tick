@@ -249,6 +249,19 @@ function serializeGoal(goal) {
   }
 }
 
+function startOfToday() {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+}
+
+function isGoalLate(goal) {
+  if (goal.status !== 'active') return false
+  if (!goal.dueDate) return false
+  const due = new Date(goal.dueDate)
+  if (Number.isNaN(due.getTime())) return false
+  return due.getTime() < startOfToday().getTime()
+}
+
 function normalizeCategory(raw) {
   const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
   return value || 'geral'
@@ -378,12 +391,19 @@ app.get('/api/goals', async (req, res) => {
     return res.status(400).json({ error: 'invalid status' })
   }
 
-  const goals = await prisma.goal.findMany({
+  // Garante consistência: metas ativas com prazo já passado viram "late".
+  await prisma.goal.updateMany({
     where: {
       userId,
-      ...(status ? { status } : {}),
+      status: 'active',
+      dueDate: { lt: startOfToday() },
     },
-    orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { createdAt: 'desc' }],
+    data: { status: 'late' },
+  })
+
+  const goals = await prisma.goal.findMany({
+    where: { userId },
+    orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
   })
   const prefix = currentMonthPrefix()
   const doneRows = await prisma.dayDemand.findMany({
@@ -400,10 +420,12 @@ app.get('/api/goals', async (req, res) => {
     const doneCount = doneByCategory.get(normalizeCategory(goal.category)) ?? 0
     const target = Math.max(1, goal.targetCount)
     const progress = Math.min(100, Math.round((doneCount / target) * 100))
-    return { ...goal, progress }
+    const computedStatus = isGoalLate(goal) ? 'late' : goal.status
+    return { ...goal, progress, status: computedStatus }
   })
 
-  res.json({ goals: computed.map(serializeGoal) })
+  const filtered = status ? computed.filter((goal) => goal.status === status) : computed
+  res.json({ goals: filtered.map(serializeGoal) })
 })
 
 app.post('/api/goals', async (req, res) => {

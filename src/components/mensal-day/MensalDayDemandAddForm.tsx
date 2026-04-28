@@ -1,3 +1,11 @@
+import { useEffect, useState } from 'react'
+import {
+  FIXED_CATEGORIES,
+  canonicalCategoryId,
+  customCategoryName,
+  type FixedCategoryId,
+} from '../../lib/categoryOptions'
+
 type MensalDayDemandAddFormProps = {
   newDemandTitle: string
   newDemandCategory: string
@@ -31,6 +39,30 @@ export default function MensalDayDemandAddForm({
   onCancel,
   onSubmit,
 }: MensalDayDemandAddFormProps) {
+  const [selectedCategory, setSelectedCategory] = useState<FixedCategoryId>(
+    canonicalCategoryId(newDemandCategory),
+  )
+  const [customCategory, setCustomCategory] = useState(customCategoryName(newDemandCategory))
+
+  useEffect(() => {
+    setSelectedCategory(canonicalCategoryId(newDemandCategory))
+    setCustomCategory(customCategoryName(newDemandCategory))
+  }, [newDemandCategory])
+
+  function handleCategorySelect(next: FixedCategoryId) {
+    setSelectedCategory(next)
+    if (next === 'outros') {
+      onNewDemandCategoryChange(customCategory.trim() || 'geral')
+      return
+    }
+    onNewDemandCategoryChange(next)
+  }
+
+  function handleCustomCategoryChange(value: string) {
+    setCustomCategory(value)
+    onNewDemandCategoryChange(value.trim() || 'geral')
+  }
+
   return (
     <div className="max-h-[62vh] shrink-0 space-y-3 overflow-y-auto rounded-xl border border-zinc-200/90 bg-zinc-100/70 p-3 dark:border-white/10 dark:bg-black/25 lg:max-h-none">
       <div>
@@ -52,23 +84,40 @@ export default function MensalDayDemandAddForm({
           }}
           autoFocus
           placeholder="Ex.: Revisar layout"
-          className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+          className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60 dark:[color-scheme:dark]"
         />
       </div>
       <div>
-        <label
-          htmlFor="demand-category"
-          className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500"
-        >
+        <p className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
           Categoria
-        </label>
-        <input
-          id="demand-category"
-          value={newDemandCategory}
-          onChange={(event) => onNewDemandCategoryChange(event.target.value)}
-          placeholder="Ex.: academia"
-          className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
-        />
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {FIXED_CATEGORIES.map((item) => {
+            const isActive = selectedCategory === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleCategorySelect(item.id)}
+                className={
+                  isActive
+                    ? 'min-h-10 rounded-lg border border-red-300/60 bg-red-400/20 px-3 text-sm font-medium text-zinc-900 dark:text-zinc-100'
+                    : 'min-h-10 rounded-lg border border-zinc-300/80 bg-white px-3 text-sm text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-black/40 dark:text-zinc-200 dark:hover:bg-white/10'
+                }
+              >
+                {item.label}
+              </button>
+            )
+          })}
+        </div>
+        {selectedCategory === 'outros' ? (
+          <input
+            value={customCategory}
+            onChange={(event) => handleCustomCategoryChange(event.target.value)}
+            placeholder="Nome da categoria"
+            className="mt-2 w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+          />
+        ) : null}
       </div>
       <div>
         <label

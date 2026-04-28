@@ -1,12 +1,14 @@
-import { Plus, Square, Target, Wallet, type LucideIcon } from 'lucide-react'
+import { BookOpen, Dumbbell, HandCoins, Tag, type LucideIcon } from 'lucide-react'
+import { canonicalCategoryId } from '../../lib/categoryOptions'
 
 export const metasCategoryIcons: Record<string, LucideIcon> = {
-  fitness: Target,
-  financas: Wallet,
-  leitura: Square,
+  fitness: Dumbbell,
+  financas: HandCoins,
+  leitura: BookOpen,
+  outros: Tag,
 }
 
 export function getMetasCategoryIcon(category: string): LucideIcon {
-  const key = category.toLowerCase()
-  return metasCategoryIcons[key] ?? Plus
+  const key = canonicalCategoryId(category)
+  return metasCategoryIcons[key] ?? Tag
 }

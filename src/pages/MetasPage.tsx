@@ -29,7 +29,7 @@ export default function MetasPage() {
           onConcludeGoal={m.handleConcludeGoal}
           onOpenEditGoal={m.handleOpenEditGoal}
         />
-        <MetasMilestonesColumn milestones={m.milestones} onAddClick={() => m.setIsCreateModalOpen(true)} />
+        <MetasMilestonesColumn onAddClick={() => m.setIsCreateModalOpen(true)} />
       </div>
 
       <MetasCreateModal

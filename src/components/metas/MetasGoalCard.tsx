@@ -1,5 +1,6 @@
 import { createElement } from 'react'
 import type { Goal } from '../../api/goals'
+import { categoryDisplayLabel } from '../../lib/categoryOptions'
 import { formatGoalDate, formatGoalDateTime } from '../../lib/goalFormat'
 import { getMetasCategoryIcon } from './metasCategoryIcons'
 
@@ -10,6 +11,17 @@ type MetasGoalCardProps = {
 }
 
 export default function MetasGoalCard({ goal, onConclude, onEdit }: MetasGoalCardProps) {
+  const dueDateText = formatGoalDate(goal.dueDate)
+  const dueDateMs = goal.dueDate ? new Date(goal.dueDate).getTime() : Number.NaN
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const hasDueDate = Number.isFinite(dueDateMs)
+  const daysUntilDue = hasDueDate
+    ? Math.floor((dueDateMs - todayStart.getTime()) / (1000 * 60 * 60 * 24))
+    : null
+  const dueSoonOrLate =
+    goal.status !== 'completed' && daysUntilDue !== null && daysUntilDue <= 3
+
   return (
     <article className="rounded-xl border border-zinc-200/80 bg-white/80 p-2.5 dark:border-white/10 dark:bg-white/5">
       <div className="flex items-center gap-3">
@@ -25,7 +37,7 @@ export default function MetasGoalCard({ goal, onConclude, onEdit }: MetasGoalCar
             <p className="text-sm text-zinc-700 dark:text-zinc-300">{goal.progress}%</p>
           </div>
           <p className="mb-1 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-            {goal.category} · alvo {goal.targetCount}
+            {categoryDisplayLabel(goal.category)} · alvo {goal.targetCount}
           </p>
           <div className="h-1.5 w-full rounded-full bg-zinc-300/60 dark:bg-zinc-700/60">
             <div
@@ -35,7 +47,11 @@ export default function MetasGoalCard({ goal, onConclude, onEdit }: MetasGoalCar
             />
           </div>
         </div>
-        <p className="max-w-[7.5rem] shrink-0 text-right text-xs text-zinc-600 dark:text-zinc-400">
+        <p
+          className={`max-w-[7.5rem] shrink-0 text-right text-xs ${
+            dueSoonOrLate ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400'
+          }`}
+        >
           {goal.status === 'completed' ? (
             <>
               Concluída
@@ -43,7 +59,7 @@ export default function MetasGoalCard({ goal, onConclude, onEdit }: MetasGoalCar
               {formatGoalDateTime(goal.completedAt ?? goal.updatedAt)}
             </>
           ) : (
-            formatGoalDate(goal.dueDate)
+            dueDateText
           )}
         </p>
         <div className="flex items-center gap-2">

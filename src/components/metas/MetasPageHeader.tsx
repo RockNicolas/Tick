@@ -7,9 +7,6 @@ export default function MetasPageHeader() {
         <Target className="h-7 w-7 shrink-0 text-emerald-400 sm:h-8 sm:w-8" />
         <span className="min-w-0">Metas</span>
       </div>
-      <p className="max-w-prose text-sm leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-base">
-        Defina e acompanhe metas
-      </p>
     </div>
   )
 }
