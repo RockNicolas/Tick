@@ -166,7 +166,7 @@ export default function MensalDayDemandEditDialog({
                 />
               </div>
               <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500">
-                Fim = horário de término na semana (a barra vai até esse horário).
+                Fim em hora cheia é inclusivo na semana (13:00–17:00 inclui o campo das 17h).
               </p>
             </div>
             <div className="flex gap-2 pt-1 md:col-span-2">

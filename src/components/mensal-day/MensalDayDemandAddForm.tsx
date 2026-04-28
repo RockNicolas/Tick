@@ -136,8 +136,8 @@ export default function MensalDayDemandAddForm({
         </div>
         <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500">
           Preencha início e fim para o item aparecer na grade Semana. O horário de{' '}
-          <span className="font-medium text-zinc-600 dark:text-zinc-400">fim</span> é quando a demanda termina
-          (ex.: 13:00–16:00 desenha do traço do 13h até o traço do 16h).
+          <span className="font-medium text-zinc-600 dark:text-zinc-400">fim</span> é inclusivo quando cai em
+          hora cheia (ex.: 13:00–17:00 ocupa até o campo das 17h).
         </p>
       </div>
       <div className="flex gap-2">

@@ -29,8 +29,21 @@ export function demandHasTimeRange(d: {
   endTime?: string | null
 }): boolean {
   const a = parseHHmmToMinutes(d.startTime)
-  const b = parseHHmmToMinutes(d.endTime)
+  const bRaw = parseHHmmToMinutes(d.endTime)
+  const b = bRaw === null ? null : expandInclusiveHourEnd(bRaw)
   return a !== null && b !== null && a < b
+}
+
+/**
+ * A UI semanal usa "até HH:00" como inclusivo da hora final.
+ * Ex.: 13:00–17:00 ocupa visualmente até 18:00 (inclui o campo das 17h).
+ */
+export function expandInclusiveHourEnd(endMin: number): number {
+  if (!Number.isFinite(endMin)) return endMin
+  const rounded = Math.round(endMin)
+  const isWholeHour = rounded % 60 === 0
+  if (!isWholeHour) return endMin
+  return Math.min(24 * 60, rounded + 60)
 }
 
 export function clipMinutesToView(

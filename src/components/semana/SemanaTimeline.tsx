@@ -4,6 +4,7 @@ import type { DemandsByDate } from '../../api/dayDemands'
 import {
   clipMinutesToView,
   demandHasTimeRange,
+  expandInclusiveHourEnd,
   parseHHmmToMinutes,
 } from '../../lib/timeRange'
 
@@ -41,22 +42,6 @@ function categoryStyle(cat: string): {
     stripe: 'bg-sky-400/95',
     icon: LayoutList,
   }
-}
-
-/** Posição em % da altura da coluna (bloco `relative` com linhas da grade). Evita descompasso com medição em px do container pai. */
-function demandBlockLayoutPct(
-  clip: { start: number; end: number },
-  viewStart: number,
-  viewTotalMin: number,
-): { topPct: number; heightPct: number } | null {
-  if (viewTotalMin <= 0 || !Number.isFinite(viewTotalMin)) return null
-  const topPct = ((clip.start - viewStart) / viewTotalMin) * 100
-  const rawHPct = ((clip.end - clip.start) / viewTotalMin) * 100
-  const minMinutePct = (1 / viewTotalMin) * 100
-  const maxHPct = Math.max(0, 100 - topPct)
-  const heightPct = Math.min(Math.max(rawHPct, minMinutePct, 0.4), maxHPct)
-  if (heightPct < 0.05) return null
-  return { topPct, heightPct }
 }
 
 type SemanaTimelineProps = {
@@ -103,11 +88,14 @@ export default function SemanaTimeline({
 
       <div className="flex min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
         <div className="flex min-h-0 min-w-[640px] flex-1 flex-row self-stretch">
-          <div className="sticky left-0 z-10 flex w-14 shrink-0 flex-col self-stretch border-r border-zinc-200/80 bg-white/95 dark:border-white/10 dark:bg-zinc-950/95">
+          <div
+            className="sticky left-0 z-10 grid w-14 shrink-0 self-stretch border-r border-zinc-200/80 bg-white/95 dark:border-white/10 dark:bg-zinc-950/95"
+            style={{ gridTemplateRows: `repeat(${hourLabels.length}, minmax(0, 1fr))` }}
+          >
             {hourLabels.map((h) => (
               <div
                 key={h}
-                className="flex min-h-0 flex-1 flex-col justify-start border-b border-zinc-200/60 py-0.5 pr-2 text-right text-[11px] leading-tight tabular-nums text-zinc-500 dark:border-white/10 dark:text-zinc-500"
+                className="flex min-h-0 items-start justify-end border-b border-zinc-200/60 py-0.5 pr-2 text-right text-[11px] leading-tight tabular-nums text-zinc-500 dark:border-white/10 dark:text-zinc-500"
               >
                 {String(h).padStart(2, '0')}:00
               </div>
@@ -131,28 +119,36 @@ export default function SemanaTimeline({
                   {hourLabels.map((h, i) => (
                     <div
                       key={`${dateKey}-${h}`}
-                      className="pointer-events-none relative z-0 min-h-0 border-b border-zinc-200/50 dark:border-white/[0.06]"
+                      className="pointer-events-none relative z-0 min-h-0 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-zinc-200/50 dark:after:bg-white/[0.06]"
                       style={{ gridColumn: 1, gridRow: i + 1 }}
                     />
                   ))}
 
-                  <div className="pointer-events-none absolute inset-0 z-10 min-h-0 overflow-hidden">
+                  <div
+                    className="pointer-events-none absolute inset-0 z-10 grid min-h-0 grid-cols-1 overflow-hidden"
+                    style={{ gridTemplateRows: `repeat(${viewTotalMin}, minmax(0, 1fr))` }}
+                  >
                     {timed.map(({ d, index }) => {
                       const startMin = parseHHmmToMinutes(d.startTime)!
-                      const endMin = parseHHmmToMinutes(d.endTime)!
+                      const endMin = expandInclusiveHourEnd(parseHHmmToMinutes(d.endTime)!)
                       const clip = clipMinutesToView(startMin, endMin, viewStart, viewEnd)
                       if (!clip) return null
-                      const layout = demandBlockLayoutPct(clip, viewStart, viewTotalMin)
-                      if (!layout) return null
-                      const { topPct, heightPct } = layout
+                      const startOffset = Math.max(0, Math.floor(clip.start - viewStart))
+                      const endOffset = Math.min(viewTotalMin, Math.ceil(clip.end - viewStart))
+                      const rowStart = startOffset + 1
+                      const rowEnd = Math.max(rowStart + 1, endOffset + 1)
                       const { body, stripe, icon: Icon } = categoryStyle(d.category)
                       const customColor = typeof d.color === 'string' ? d.color.trim() : ''
                       const hasCustomColor = /^#[0-9a-f]{6}$/i.test(customColor)
                       return (
                         <div
                           key={`${dateKey}-${index}-${d.title}`}
-                          className="pointer-events-auto box-border absolute left-0.5 right-0.5 overflow-hidden rounded-lg border px-1 py-0.5 text-[11px] leading-tight shadow-sm backdrop-blur-sm sm:left-1 sm:right-1 sm:px-1.5 sm:py-1 sm:text-xs"
-                          style={{ top: `${topPct}%`, height: `${heightPct}%`, zIndex: 2 + index }}
+                          className="pointer-events-auto box-border mx-0.5 overflow-hidden rounded-lg px-1 text-[11px] leading-tight shadow-sm backdrop-blur-sm sm:mx-1 sm:px-1.5 sm:text-xs"
+                          style={{
+                            gridColumn: 1,
+                            gridRow: `${rowStart} / ${rowEnd}`,
+                            zIndex: 2 + index,
+                          }}
                           title={`${d.startTime}–${d.endTime}`}
                         >
                           <div
