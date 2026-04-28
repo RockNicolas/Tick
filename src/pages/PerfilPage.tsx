@@ -2,22 +2,29 @@ import {
   UserRound,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import PerfilConquistasCard from '../components/perfil/PerfilConquistasCard'
+import PerfilHeroCard from '../components/perfil/PerfilHeroCard'
+import PerfilPerformanceHubCard from '../components/perfil/PerfilPerformanceHubCard'
+import { type WishItem } from '../components/perfil/types'
+import PerfilWishlistMarcosCard from '../components/perfil/PerfilWishlistMarcosCard'
 import { fetchDayDemandsForMonth } from '../api/dayDemands'
-import { fetchGoals, type Goal } from '../api/goals'
-import PerfilIdentidadeFocoCard from '../components/perfil/PerfilIdentidadeFocoCard'
-import PerfilListaDesejosCard, { type WishItem } from '../components/perfil/PerfilListaDesejosCard'
-import PerfilResumoProgressoCard, { type MonthlyCategoryStat } from '../components/perfil/PerfilResumoProgressoCard'
-import PerfilResumoRapidoCard from '../components/perfil/PerfilResumoRapidoCard'
-import PerfilTopMetasCard from '../components/perfil/PerfilTopMetasCard'
+import { fetchGoals } from '../api/goals'
 import { categoryDisplayLabel } from '../lib/categoryOptions'
 import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
 
 const FIXED_GOAL_CATEGORIES = [
-  { key: 'fitness', label: 'Fitness' },
-  { key: 'financeiro', label: 'Financeiro' },
-  { key: 'ler', label: 'Ler' },
-  { key: 'outros', label: 'Outros' },
+  { key: 'fitness', label: 'Fitness', color: '#22d3ee' },
+  { key: 'financeiro', label: 'Finanças', color: '#34d399' },
+  { key: 'ler', label: 'Leitura', color: '#a78bfa' },
+  { key: 'outros', label: 'Outros', color: '#f59e0b' },
 ] as const
+
+type MonthlyCategoryStat = {
+  category: string
+  label: string
+  percent: number
+  color: string
+}
 
 function normalizeGoalCategory(raw: string) {
   const value = raw.trim().toLowerCase()
@@ -32,11 +39,6 @@ export default function PerfilPage() {
   const userName = user?.name?.trim() ? user.name : 'Usuário Tick'
   const userEmail = user?.email ?? 'usuario@tick.app'
   const initials = getUserInitials(userName)
-  const [activeGoalsCount, setActiveGoalsCount] = useState(0)
-  const [highProgressGoalsCount, setHighProgressGoalsCount] = useState(0)
-  const [topMonthlyGoals, setTopMonthlyGoals] = useState<Goal[]>([])
-  const [monthlyDoneCount, setMonthlyDoneCount] = useState(0)
-  const [monthlyTotalCount, setMonthlyTotalCount] = useState(0)
   const [monthlyCompletionRate, setMonthlyCompletionRate] = useState(0)
   const [monthlyFocus, setMonthlyFocus] = useState('sem foco definido')
   const [monthlyCategoryStats, setMonthlyCategoryStats] = useState<MonthlyCategoryStat[]>([])
@@ -78,13 +80,6 @@ export default function PerfilPage() {
 
         if (cancelled) return
 
-        setActiveGoalsCount(activeGoals.length)
-        setHighProgressGoalsCount(activeGoals.filter((goal) => goal.progress >= 70).length)
-        setTopMonthlyGoals(
-          [...activeGoals]
-            .sort((a, b) => b.progress - a.progress || a.title.localeCompare(b.title))
-            .slice(0, 3),
-        )
         const byCategory = new Map<string, { totalProgress: number; goals: number }>()
         for (const goal of activeGoals) {
           const bucket = normalizeGoalCategory(goal.category || 'outros')
@@ -95,11 +90,11 @@ export default function PerfilPage() {
           })
         }
         setMonthlyCategoryStats(
-          FIXED_GOAL_CATEGORIES.map(({ key, label }) => {
+          FIXED_GOAL_CATEGORIES.map(({ key, label, color }) => {
             const aggregate = byCategory.get(key)
             const goals = aggregate?.goals ?? 0
             const avgPercent = goals > 0 ? Math.round((aggregate?.totalProgress ?? 0) / goals) : 0
-            return { category: key, label, count: goals, percent: avgPercent }
+            return { category: key, label, percent: avgPercent, color }
           }),
         )
 
@@ -118,8 +113,6 @@ export default function PerfilPage() {
             monthDoneByCategory.set(key, (monthDoneByCategory.get(key) ?? 0) + 1)
           }
         }
-        setMonthlyDoneCount(monthDone)
-        setMonthlyTotalCount(monthTotal)
         setMonthlyCompletionRate(monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : 0)
         if (monthDoneByCategory.size === 0) {
           setMonthlyFocus('sem foco definido')
@@ -136,15 +129,10 @@ export default function PerfilPage() {
         }
       } catch {
         if (cancelled) return
-        setActiveGoalsCount(0)
-        setHighProgressGoalsCount(0)
-        setTopMonthlyGoals([])
-        setMonthlyDoneCount(0)
-        setMonthlyTotalCount(0)
         setMonthlyCompletionRate(0)
         setMonthlyFocus('sem foco definido')
         setMonthlyCategoryStats(
-          FIXED_GOAL_CATEGORIES.map(({ key, label }) => ({ category: key, label, count: 0, percent: 0 })),
+          FIXED_GOAL_CATEGORIES.map(({ key, label, color }) => ({ category: key, label, percent: 0, color })),
         )
       }
     })()
@@ -154,41 +142,37 @@ export default function PerfilPage() {
     }
   }, [])
 
+  const weakestCategory = useMemo(() => {
+    const sorted = [...monthlyCategoryStats].sort((a, b) => a.percent - b.percent)
+    return sorted[0]?.label ?? 'metas'
+  }, [monthlyCategoryStats])
+
+  const doneWishCount = useMemo(() => wishItems.filter((item) => item.done).length, [wishItems])
+  const chartPercents = useMemo(() => {
+    const fallback = [0, 0, 0, 0]
+    if (monthlyCategoryStats.length < 4) return fallback
+    return monthlyCategoryStats.slice(0, 4).map((item) => Math.max(0, Math.min(100, item.percent)))
+  }, [monthlyCategoryStats])
+
   return (
-    <div className="min-w-0 space-y-5 sm:space-y-6">
-      <div className="flex min-w-0 flex-wrap items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-3xl">
-        <UserRound className="h-7 w-7 shrink-0 text-zinc-700 sm:h-8 sm:w-8 dark:text-zinc-300" />
-        <span className="min-w-0">Perfil de usuário</span>
+    <div className="min-w-0 space-y-4">
+      <div className="flex min-w-0 items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-3xl">
+        <UserRound className="h-7 w-7 shrink-0 text-zinc-700 dark:text-zinc-300" />
+        <span>Perfil de usuário</span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="space-y-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-start">
-            <div className="w-full xl:w-[min(100%,460px)]">
-              <PerfilIdentidadeFocoCard initials={initials} userName={userName} userEmail={userEmail} />
-            </div>
-            <div className="w-full xl:w-[min(100%,460px)]">
-              <PerfilResumoRapidoCard
-                activeGoalsCount={activeGoalsCount}
-                monthlyCompletionRate={monthlyCompletionRate}
-                monthlyFocus={monthlyFocus}
-              />
-            </div>
-          </div>
-
-          <PerfilResumoProgressoCard
-            monthlyCompletionRate={monthlyCompletionRate}
-            highProgressGoalsCount={highProgressGoalsCount}
-            activeGoalsCount={activeGoalsCount}
-            monthlyDoneCount={monthlyDoneCount}
-            monthlyTotalCount={monthlyTotalCount}
-            monthlyCategoryStats={monthlyCategoryStats}
-          />
-        </div>
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[220px_1fr_300px]">
+        <PerfilHeroCard initials={initials} userName={userName} userEmail={userEmail} />
+        <PerfilPerformanceHubCard
+          monthlyCompletionRate={monthlyCompletionRate}
+          monthlyCategoryStats={monthlyCategoryStats}
+          chartPercents={chartPercents}
+          weakestCategory={weakestCategory}
+          monthlyFocus={monthlyFocus}
+        />
 
         <div className="space-y-4">
-          <PerfilTopMetasCard topMonthlyGoals={topMonthlyGoals} />
-          <PerfilListaDesejosCard
+          <PerfilWishlistMarcosCard
             wishItems={wishItems}
             newWishTitle={newWishTitle}
             newWishPrice={newWishPrice}
@@ -210,6 +194,7 @@ export default function PerfilPage() {
               )
             }
           />
+          <PerfilConquistasCard doneWishCount={doneWishCount} />
         </div>
       </div>
     </div>
