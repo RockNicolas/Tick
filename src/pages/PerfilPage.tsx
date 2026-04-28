@@ -161,24 +161,30 @@ export default function PerfilPage() {
         <span className="min-w-0">Perfil de usuário</span>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <PerfilIdentidadeFocoCard initials={initials} userName={userName} userEmail={userEmail} />
-        <PerfilResumoRapidoCard
-          activeGoalsCount={activeGoalsCount}
-          monthlyCompletionRate={monthlyCompletionRate}
-          monthlyFocus={monthlyFocus}
-        />
-      </div>
-
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <PerfilResumoProgressoCard
-          monthlyCompletionRate={monthlyCompletionRate}
-          highProgressGoalsCount={highProgressGoalsCount}
-          activeGoalsCount={activeGoalsCount}
-          monthlyDoneCount={monthlyDoneCount}
-          monthlyTotalCount={monthlyTotalCount}
-          monthlyCategoryStats={monthlyCategoryStats}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-start">
+            <div className="w-full xl:w-[min(100%,460px)]">
+              <PerfilIdentidadeFocoCard initials={initials} userName={userName} userEmail={userEmail} />
+            </div>
+            <div className="w-full xl:w-[min(100%,460px)]">
+              <PerfilResumoRapidoCard
+                activeGoalsCount={activeGoalsCount}
+                monthlyCompletionRate={monthlyCompletionRate}
+                monthlyFocus={monthlyFocus}
+              />
+            </div>
+          </div>
+
+          <PerfilResumoProgressoCard
+            monthlyCompletionRate={monthlyCompletionRate}
+            highProgressGoalsCount={highProgressGoalsCount}
+            activeGoalsCount={activeGoalsCount}
+            monthlyDoneCount={monthlyDoneCount}
+            monthlyTotalCount={monthlyTotalCount}
+            monthlyCategoryStats={monthlyCategoryStats}
+          />
+        </div>
 
         <div className="space-y-4">
           <PerfilTopMetasCard topMonthlyGoals={topMonthlyGoals} />
