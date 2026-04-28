@@ -1,19 +1,37 @@
 import {
-  Bell,
-  CheckCircle2,
-  CircleOff,
   Focus,
-  Link2,
   NotepadText,
   Trophy,
   UserRound,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { fetchDayDemandsForWeek, startOfWeekSunday } from '../api/dayDemands'
-import { fetchGoals } from '../api/goals'
+import { fetchDayDemandsForMonth } from '../api/dayDemands'
+import { fetchGoals, type Goal } from '../api/goals'
 import SettingsSectionCard from '../components/settings/SettingsSectionCard'
 import { categoryDisplayLabel } from '../lib/categoryOptions'
 import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
+
+type MonthlyCategoryStat = {
+  category: string
+  label: string
+  count: number
+  percent: number
+}
+
+const FIXED_GOAL_CATEGORIES = [
+  { key: 'fitness', label: 'Fitness' },
+  { key: 'financeiro', label: 'Financeiro' },
+  { key: 'ler', label: 'Ler' },
+  { key: 'outros', label: 'Outros' },
+] as const
+
+function normalizeGoalCategory(raw: string) {
+  const value = raw.trim().toLowerCase()
+  if (value === 'fitness') return 'fitness'
+  if (value === 'financas' || value === 'finanças' || value === 'financeiro') return 'financeiro'
+  if (value === 'leitura' || value === 'ler') return 'ler'
+  return 'outros'
+}
 
 export default function PerfilPage() {
   const user = useMemo(() => readTickStoredUser(), [])
@@ -21,56 +39,98 @@ export default function PerfilPage() {
   const userEmail = user?.email ?? 'usuario@tick.app'
   const initials = getUserInitials(userName)
   const [activeGoalsCount, setActiveGoalsCount] = useState(0)
-  const [weeklyDoneCount, setWeeklyDoneCount] = useState(0)
-  const [weeklyFocus, setWeeklyFocus] = useState('sem foco definido')
+  const [activeGoalsProgressAvg, setActiveGoalsProgressAvg] = useState(0)
+  const [highProgressGoalsCount, setHighProgressGoalsCount] = useState(0)
+  const [topMonthlyGoals, setTopMonthlyGoals] = useState<Goal[]>([])
+  const [monthlyDoneCount, setMonthlyDoneCount] = useState(0)
+  const [monthlyTotalCount, setMonthlyTotalCount] = useState(0)
+  const [monthlyCompletionRate, setMonthlyCompletionRate] = useState(0)
+  const [monthlyFocus, setMonthlyFocus] = useState('sem foco definido')
+  const [monthlyCategoryStats, setMonthlyCategoryStats] = useState<MonthlyCategoryStat[]>([])
 
   useEffect(() => {
     let cancelled = false
 
     ;(async () => {
       try {
-        const [activeGoals, weekDemands] = await Promise.all([
-          fetchGoals('active'),
-          fetchDayDemandsForWeek(startOfWeekSunday(new Date())),
-        ])
+        const activeGoals = await fetchGoals('active')
 
         if (cancelled) return
 
         setActiveGoalsCount(activeGoals.length)
+        const avgProgress =
+          activeGoals.length > 0
+            ? Math.round(activeGoals.reduce((sum, goal) => sum + goal.progress, 0) / activeGoals.length)
+            : 0
+        setActiveGoalsProgressAvg(avgProgress)
+        setHighProgressGoalsCount(activeGoals.filter((goal) => goal.progress >= 70).length)
+        setTopMonthlyGoals(
+          [...activeGoals]
+            .sort((a, b) => b.progress - a.progress || a.title.localeCompare(b.title))
+            .slice(0, 3),
+        )
+        const byCategory = new Map<string, { totalProgress: number; goals: number }>()
+        for (const goal of activeGoals) {
+          const bucket = normalizeGoalCategory(goal.category || 'outros')
+          const prev = byCategory.get(bucket) ?? { totalProgress: 0, goals: 0 }
+          byCategory.set(bucket, {
+            totalProgress: prev.totalProgress + Math.max(0, Math.min(100, goal.progress)),
+            goals: prev.goals + 1,
+          })
+        }
+        setMonthlyCategoryStats(
+          FIXED_GOAL_CATEGORIES.map(({ key, label }) => {
+            const aggregate = byCategory.get(key)
+            const goals = aggregate?.goals ?? 0
+            const avgPercent = goals > 0 ? Math.round((aggregate?.totalProgress ?? 0) / goals) : 0
+            return { category: key, label, count: goals, percent: avgPercent }
+          }),
+        )
 
-        const doneByCategory = new Map<string, number>()
-        let doneCount = 0
-
-        for (const list of Object.values(weekDemands)) {
+        const now = new Date()
+        const monthDemands = await fetchDayDemandsForMonth(now.getFullYear(), now.getMonth() + 1)
+        if (cancelled) return
+        let monthDone = 0
+        let monthTotal = 0
+        const monthDoneByCategory = new Map<string, number>()
+        for (const list of Object.values(monthDemands)) {
           for (const demand of list) {
+            monthTotal += 1
             if (!demand.done) continue
-            doneCount += 1
+            monthDone += 1
             const key = (demand.category || 'geral').trim().toLowerCase() || 'geral'
-            doneByCategory.set(key, (doneByCategory.get(key) ?? 0) + 1)
+            monthDoneByCategory.set(key, (monthDoneByCategory.get(key) ?? 0) + 1)
           }
         }
-
-        setWeeklyDoneCount(doneCount)
-
-        if (doneByCategory.size === 0) {
-          setWeeklyFocus('sem foco definido')
-          return
-        }
-
-        let topCategory = 'geral'
-        let topCount = -1
-        for (const [category, count] of doneByCategory.entries()) {
-          if (count > topCount) {
-            topCategory = category
-            topCount = count
+        setMonthlyDoneCount(monthDone)
+        setMonthlyTotalCount(monthTotal)
+        setMonthlyCompletionRate(monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : 0)
+        if (monthDoneByCategory.size === 0) {
+          setMonthlyFocus('sem foco definido')
+        } else {
+          let monthTopCategory = 'geral'
+          let monthTopCount = -1
+          for (const [category, count] of monthDoneByCategory.entries()) {
+            if (count > monthTopCount) {
+              monthTopCategory = category
+              monthTopCount = count
+            }
           }
+          setMonthlyFocus(categoryDisplayLabel(monthTopCategory).toLowerCase())
         }
-        setWeeklyFocus(categoryDisplayLabel(topCategory).toLowerCase())
       } catch {
         if (cancelled) return
         setActiveGoalsCount(0)
-        setWeeklyDoneCount(0)
-        setWeeklyFocus('sem foco definido')
+        setActiveGoalsProgressAvg(0)
+        setHighProgressGoalsCount(0)
+        setTopMonthlyGoals([])
+        setMonthlyDoneCount(0)
+        setMonthlyTotalCount(0)
+        setMonthlyCompletionRate(0)
+        setMonthlyFocus('sem foco definido')
+        setMonthlyCategoryStats(
+          FIXED_GOAL_CATEGORIES.map(({ key, label }) => ({ category: key, label, count: 0, percent: 0 })),
+        )
       }
     })()
 
@@ -99,58 +159,98 @@ export default function PerfilPage() {
             </div>
           </div>
         </SettingsSectionCard>
-
-        <SettingsSectionCard title="Metas e conquistas" icon={Trophy}>
-          <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-            <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden />
-              {activeGoalsCount} metas ativas
-            </li>
-            <li className="flex items-center gap-2">
-              <NotepadText className="h-4 w-4 shrink-0 text-sky-500" aria-hidden />
-              {weeklyDoneCount} tarefas concluídas nesta semana
-            </li>
-            <li className="flex items-center gap-2">
-              <CircleOff className="h-4 w-4 shrink-0 text-amber-500" aria-hidden />
-              Foco semanal: {weeklyFocus}
-            </li>
-          </ul>
+        <SettingsSectionCard title="Resumo rápido" icon={Trophy}>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Metas ativas</p>
+              <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{activeGoalsCount}</p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Taxa mensal</p>
+              <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{monthlyCompletionRate}%</p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Foco</p>
+              <p className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-100">{monthlyFocus}</p>
+            </div>
+          </div>
         </SettingsSectionCard>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <SettingsSectionCard title="Integrações e ferramentas" icon={Link2}>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {[
-              { label: 'Google Calendar', connected: true },
-              { label: 'Outlook Calendar', connected: false },
-              { label: 'Notion', connected: true },
-              { label: 'Slack', connected: false },
-            ].map(({ label, connected }) => (
-              <div
-                key={label}
-                className="rounded-xl border border-zinc-200/80 bg-white/80 p-2.5 dark:border-white/10 dark:bg-white/5"
-              >
-                <p className="text-zinc-800 dark:text-zinc-200">{label}</p>
-                <p
-                  className={`mt-1 text-xs ${
-                    connected ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400'
-                  }`}
-                >
-                  {connected ? 'Conectado' : 'Não conectado'}
+        <SettingsSectionCard title="Resumo do progresso" icon={Trophy}>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Média global</p>
+                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  {monthlyCompletionRate}%
                 </p>
               </div>
-            ))}
+              <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Bom avanço</p>
+                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  {highProgressGoalsCount}
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-2 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Exigem foco</p>
+                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  {Math.max(0, activeGoalsCount - highProgressGoalsCount)}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                <span>Evolução mensal</span>
+                <span>
+                  {monthlyDoneCount}/{monthlyTotalCount}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-zinc-200/80 dark:bg-white/10">
+                <div
+                  className="h-2 rounded-full bg-emerald-500 transition-all"
+                  style={{ width: `${Math.max(0, Math.min(100, monthlyCompletionRate))}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-zinc-200/80 bg-white/60 p-2 dark:border-white/10 dark:bg-white/5">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                Categorias do mês: {monthlyCategoryStats.map((item) => item.label).join(' · ')}
+              </p>
+            </div>
           </div>
         </SettingsSectionCard>
 
-        <SettingsSectionCard title="Privacidade e notificações" icon={Bell}>
-          <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-            <li>Email diário: ativado</li>
-            <li>Lembretes de metas: ativado</li>
-            <li>Modo privado: desativado</li>
-            <li>Alertas sonoros: ativos</li>
-          </ul>
+        <SettingsSectionCard title="Top metas do mês" icon={NotepadText}>
+          <div className="space-y-2.5">
+            {topMonthlyGoals.length === 0 ? (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Você ainda não tem metas ativas neste mês.</p>
+            ) : (
+              topMonthlyGoals.map((goal) => (
+                <div
+                  key={goal.id}
+                  className="rounded-xl border border-zinc-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-white/5"
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{goal.title}</p>
+                    <p className="shrink-0 text-xs text-zinc-600 dark:text-zinc-400">{goal.progress}%</p>
+                  </div>
+                  <div className="h-2 rounded-full bg-zinc-200/80 dark:bg-white/10">
+                    <div
+                      className="h-2 rounded-full bg-emerald-500 transition-all"
+                      style={{ width: `${Math.max(0, Math.min(100, goal.progress))}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {categoryDisplayLabel(goal.category)} · {goal.progress >= 70 ? 'Quase lá!' : 'Em andamento'}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
         </SettingsSectionCard>
       </div>
     </div>
