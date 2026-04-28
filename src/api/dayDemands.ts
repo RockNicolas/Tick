@@ -1,6 +1,7 @@
 import type { MonthlyDemand } from '../types/monthlyDemand'
 
 export type DemandsByDate = Record<string, MonthlyDemand[]>
+export const DAY_DEMANDS_UPDATED_EVENT = 'tick:day-demands-updated'
 
 function normalizePriority(raw: unknown): 'baixa' | 'media' | 'importante' {
   const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
@@ -113,6 +114,11 @@ export async function saveDayDemandsForMonth(
   if (!res.ok) {
     const text = await res.text().catch(() => '')
     throw new Error(text || `PUT day-demands failed: ${res.status}`)
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(DAY_DEMANDS_UPDATED_EVENT, { detail: { year, month: month1to12 } }),
+    )
   }
 }
 

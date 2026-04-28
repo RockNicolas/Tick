@@ -50,6 +50,7 @@ type SemanaTimelineProps = {
   weekDays: WeekDay[]
   viewStart: number
   viewEnd: number
+  onToggleDone: (dateKey: string, demandIndex: number) => void
 }
 
 export default function SemanaTimeline({
@@ -58,6 +59,7 @@ export default function SemanaTimeline({
   weekDays,
   viewStart,
   viewEnd,
+  onToggleDone,
 }: SemanaTimelineProps) {
   const viewTotalMin = Math.max(1, viewEnd - viewStart)
 
@@ -168,6 +170,20 @@ export default function SemanaTimeline({
                               aria-hidden
                             />
                             <div className="flex min-w-0 flex-1 items-start gap-1 px-1 py-0.5 sm:px-1.5">
+                              <button
+                                type="button"
+                                aria-label={
+                                  d.done ? 'Marcar demanda como pendente' : 'Marcar demanda como concluída'
+                                }
+                                onClick={() => onToggleDone(dateKey, index)}
+                                className={`mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border text-[10px] leading-none transition ${
+                                  d.done
+                                    ? 'border-emerald-600/50 bg-emerald-100/90 text-zinc-900 dark:border-emerald-400/70 dark:bg-emerald-500/20 dark:text-emerald-200'
+                                    : 'border-zinc-300/80 bg-zinc-100/80 text-transparent hover:border-emerald-500/50 dark:border-white/25 dark:bg-black/20 dark:hover:border-emerald-400/50'
+                                }`}
+                              >
+                                ✓
+                              </button>
                               <Icon className="mt-0.5 h-3 w-3 shrink-0 opacity-90" aria-hidden />
                               <span className="min-w-0 flex-1 truncate font-medium leading-snug">
                                 {d.title}

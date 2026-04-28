@@ -8,7 +8,8 @@ import type { PeriodId } from '../lib/semanaCalendar'
 
 export default function SemanaPage() {
   const [period, setPeriod] = useState<PeriodId>('inteiro')
-  const { weekDays, viewStart, viewEnd, byDate, loading, error } = useSemanaWeek(period)
+  const { weekDays, viewStart, viewEnd, byDate, loading, error, toggleDemandDone } =
+    useSemanaWeek(period)
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-3 sm:gap-4">
@@ -23,6 +24,7 @@ export default function SemanaPage() {
           weekDays={weekDays}
           viewStart={viewStart}
           viewEnd={viewEnd}
+          onToggleDone={toggleDemandDone}
         />
 
         <SemanaCadastroMensalLink />

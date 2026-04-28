@@ -8,8 +8,11 @@ import {
   Trophy,
   UserRound,
 } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { fetchDayDemandsForWeek, startOfWeekSunday } from '../api/dayDemands'
+import { fetchGoals } from '../api/goals'
 import SettingsSectionCard from '../components/settings/SettingsSectionCard'
+import { categoryDisplayLabel } from '../lib/categoryOptions'
 import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
 
 export default function PerfilPage() {
@@ -17,6 +20,64 @@ export default function PerfilPage() {
   const userName = user?.name?.trim() ? user.name : 'Usuário Tick'
   const userEmail = user?.email ?? 'usuario@tick.app'
   const initials = getUserInitials(userName)
+  const [activeGoalsCount, setActiveGoalsCount] = useState(0)
+  const [weeklyDoneCount, setWeeklyDoneCount] = useState(0)
+  const [weeklyFocus, setWeeklyFocus] = useState('sem foco definido')
+
+  useEffect(() => {
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const [activeGoals, weekDemands] = await Promise.all([
+          fetchGoals('active'),
+          fetchDayDemandsForWeek(startOfWeekSunday(new Date())),
+        ])
+
+        if (cancelled) return
+
+        setActiveGoalsCount(activeGoals.length)
+
+        const doneByCategory = new Map<string, number>()
+        let doneCount = 0
+
+        for (const list of Object.values(weekDemands)) {
+          for (const demand of list) {
+            if (!demand.done) continue
+            doneCount += 1
+            const key = (demand.category || 'geral').trim().toLowerCase() || 'geral'
+            doneByCategory.set(key, (doneByCategory.get(key) ?? 0) + 1)
+          }
+        }
+
+        setWeeklyDoneCount(doneCount)
+
+        if (doneByCategory.size === 0) {
+          setWeeklyFocus('sem foco definido')
+          return
+        }
+
+        let topCategory = 'geral'
+        let topCount = -1
+        for (const [category, count] of doneByCategory.entries()) {
+          if (count > topCount) {
+            topCategory = category
+            topCount = count
+          }
+        }
+        setWeeklyFocus(categoryDisplayLabel(topCategory).toLowerCase())
+      } catch {
+        if (cancelled) return
+        setActiveGoalsCount(0)
+        setWeeklyDoneCount(0)
+        setWeeklyFocus('sem foco definido')
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -43,15 +104,15 @@ export default function PerfilPage() {
           <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden />
-              4 metas ativas
+              {activeGoalsCount} metas ativas
             </li>
             <li className="flex items-center gap-2">
               <NotepadText className="h-4 w-4 shrink-0 text-sky-500" aria-hidden />
-              19 tarefas concluídas nesta semana
+              {weeklyDoneCount} tarefas concluídas nesta semana
             </li>
             <li className="flex items-center gap-2">
               <CircleOff className="h-4 w-4 shrink-0 text-amber-500" aria-hidden />
-              Foco semanal: produtividade
+              Foco semanal: {weeklyFocus}
             </li>
           </ul>
         </SettingsSectionCard>

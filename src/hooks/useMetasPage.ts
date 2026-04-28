@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { DAY_DEMANDS_UPDATED_EVENT } from '../api/dayDemands'
 import { createGoal, deleteGoal, fetchGoals, type Goal, type GoalStatus, updateGoal } from '../api/goals'
 
 export function useMetasPage() {
@@ -34,6 +35,14 @@ export function useMetasPage() {
 
   useEffect(() => {
     void loadGoals(selectedTab)
+  }, [selectedTab])
+
+  useEffect(() => {
+    const onDemandsUpdated = () => {
+      void loadGoals(selectedTab)
+    }
+    window.addEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated)
+    return () => window.removeEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated)
   }, [selectedTab])
 
   useEffect(() => {

@@ -1,5 +1,6 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  DAY_DEMANDS_UPDATED_EVENT,
   fetchDayDemandsForMonth,
   pickMonthEntries,
   saveDayDemandsForMonth,
@@ -80,6 +81,32 @@ export function useMensalPage() {
 
     return () => window.clearTimeout(handle)
   }, [demandsByDate, calendarYear, calendarMonth])
+
+  useEffect(() => {
+    const onDemandsUpdated = (event: Event) => {
+      const custom = event as CustomEvent<{ year?: number; month?: number }>
+      const y = Number(custom.detail?.year)
+      const m = Number(custom.detail?.month)
+      if (!Number.isFinite(y) || !Number.isFinite(m)) return
+      if (y !== calendarYear || m !== calendarMonth) return
+
+      void (async () => {
+        try {
+          const remote = await fetchDayDemandsForMonth(calendarYear, calendarMonth)
+          skipNextSaveRef.current = true
+          setDemandsByDate((previous) => ({
+            ...stripMonthKeys(previous, calendarYear, calendarMonth),
+            ...remote,
+          }))
+        } catch (error) {
+          console.error('[Mensal] Falha ao sincronizar demandas:', error)
+        }
+      })()
+    }
+
+    window.addEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated as EventListener)
+    return () => window.removeEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated as EventListener)
+  }, [calendarYear, calendarMonth])
 
   const monthLabel = new Intl.DateTimeFormat('pt-BR', {
     month: 'long',
