@@ -73,7 +73,10 @@ export default function MensalDayDemandEditDialog({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" role="presentation">
+    <div
+      className="fixed inset-0 z-[100] flex items-start justify-center p-5 sm:items-center"
+      role="presentation"
+    >
       <button
         type="button"
         aria-label="Fechar edição"
@@ -84,7 +87,7 @@ export default function MensalDayDemandEditDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-demand-dialog-title"
-        className="relative z-[101] flex max-h-[86vh] w-[min(94vw,860px)] flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-3 shadow-xl shadow-zinc-400/15 dark:border-white/15 dark:bg-zinc-950 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_80px_rgba(0,0,0,0.65)]"
+        className="relative z-[101] flex h-auto max-h-[640px] w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-2.5 shadow-xl shadow-zinc-400/15 sm:p-3 dark:border-white/15 dark:bg-zinc-950 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_80px_rgba(0,0,0,0.65)]"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -106,8 +109,8 @@ export default function MensalDayDemandEditDialog({
           </button>
         </div>
 
-        <div className="mt-2.5 min-h-0 overflow-y-auto pr-1">
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3">
+        <div className="mt-2 min-h-0 overflow-y-auto pr-1">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">
             <div className="md:col-span-2">
               <label
                 htmlFor="edit-demand-title"
@@ -161,7 +164,48 @@ export default function MensalDayDemandEditDialog({
                 />
               ) : null}
             </div>
-            <div className="md:row-span-2">
+            <div className="space-y-2">
+              <div>
+                <label
+                  htmlFor="edit-demand-priority"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
+                >
+                  Prioridade
+                </label>
+                <select
+                  id="edit-demand-priority"
+                  value={editPriority}
+                  onChange={(event) => onEditPriorityChange(event.target.value as 'baixa' | 'media' | 'importante')}
+                  className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                >
+                  <option value="baixa">Baixa (Azul)</option>
+                  <option value="media">Média (Laranja)</option>
+                  <option value="importante">Importante (Vermelho)</option>
+                </select>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500">
+                  Horário na semana
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="time"
+                    value={editStartTime}
+                    onChange={(event) => onEditStartTimeChange(event.target.value)}
+                    className="min-w-0 flex-1 rounded-lg border border-zinc-300/80 bg-white px-2 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                    aria-label="Hora início"
+                  />
+                  <input
+                    type="time"
+                    value={editEndTime}
+                    onChange={(event) => onEditEndTimeChange(event.target.value)}
+                    className="min-w-0 flex-1 rounded-lg border border-zinc-300/80 bg-white px-2 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
+                    aria-label="Hora fim"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="md:col-span-2">
               <label
                 htmlFor="edit-demand-note"
                 className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
@@ -172,51 +216,9 @@ export default function MensalDayDemandEditDialog({
                 id="edit-demand-note"
                 value={editNote}
                 onChange={(event) => onEditNoteChange(event.target.value)}
-                rows={6}
+                rows={3}
                 className="w-full resize-none rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
               />
-            </div>
-            <div>
-              <label
-                htmlFor="edit-demand-priority"
-                className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500"
-              >
-                Prioridade
-              </label>
-              <select
-                id="edit-demand-priority"
-                value={editPriority}
-                onChange={(event) => onEditPriorityChange(event.target.value as 'baixa' | 'media' | 'importante')}
-                className="w-full rounded-lg border border-zinc-300/80 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
-              >
-                <option value="baixa">Baixa (Azul)</option>
-                <option value="media">Média (Laranja)</option>
-                <option value="importante">Importante (Vermelho)</option>
-              </select>
-            </div>
-            <div>
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-900 dark:text-zinc-500">
-                Horário na semana
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="time"
-                  value={editStartTime}
-                  onChange={(event) => onEditStartTimeChange(event.target.value)}
-                  className="min-w-0 flex-1 rounded-lg border border-zinc-300/80 bg-white px-2 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
-                  aria-label="Hora início"
-                />
-                <input
-                  type="time"
-                  value={editEndTime}
-                  onChange={(event) => onEditEndTimeChange(event.target.value)}
-                  className="min-w-0 flex-1 rounded-lg border border-zinc-300/80 bg-white px-2 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-400/70 dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/60"
-                  aria-label="Hora fim"
-                />
-              </div>
-              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500">
-                Fim em hora cheia é inclusivo na semana (13:00–17:00 inclui o campo das 17h).
-              </p>
             </div>
             <div className="flex gap-2 pt-1 md:col-span-2">
               <button

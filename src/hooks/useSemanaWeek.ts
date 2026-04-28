@@ -41,8 +41,11 @@ export function useSemanaWeek(period: PeriodId) {
     [period],
   )
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent === true
+    if (!silent) {
+      setLoading(true)
+    }
     setError('')
     try {
       const data = await fetchDayDemandsForWeek(weekStart)
@@ -51,7 +54,9 @@ export function useSemanaWeek(period: PeriodId) {
       setError(e instanceof Error ? e.message : 'Falha ao carregar agenda')
       setByDate({})
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+      }
     }
   }, [weekStart])
 
@@ -61,7 +66,7 @@ export function useSemanaWeek(period: PeriodId) {
 
   useEffect(() => {
     const onDemandsUpdated = () => {
-      void load()
+      void load({ silent: true })
     }
     window.addEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated)
     return () => window.removeEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated)

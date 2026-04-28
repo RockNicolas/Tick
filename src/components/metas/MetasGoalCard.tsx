@@ -24,7 +24,7 @@ export default function MetasGoalCard({ goal, onConclude, onEdit }: MetasGoalCar
 
   return (
     <article className="rounded-xl border border-zinc-200/80 bg-white/80 p-2.5 dark:border-white/10 dark:bg-white/5">
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-500/20">
           {createElement(getMetasCategoryIcon(goal.category), {
             className: 'h-4 w-4 text-teal-300',
@@ -47,38 +47,40 @@ export default function MetasGoalCard({ goal, onConclude, onEdit }: MetasGoalCar
             />
           </div>
         </div>
-        <p
-          className={`max-w-[7.5rem] shrink-0 text-right text-xs ${
-            dueSoonOrLate ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400'
-          }`}
-        >
-          {goal.status === 'completed' ? (
-            <>
-              Concluída
-              <br />
-              {formatGoalDateTime(goal.completedAt ?? goal.updatedAt)}
-            </>
-          ) : (
-            dueDateText
-          )}
-        </p>
-        <div className="flex items-center gap-2">
-          {goal.status === 'active' || goal.status === 'late' ? (
+        <div className="shrink-0">
+          <p
+            className={`mb-1 text-left text-xs sm:text-right ${
+              dueSoonOrLate ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400'
+            }`}
+          >
+            {goal.status === 'completed' ? (
+              <>
+                Concluída
+                <br />
+                {formatGoalDateTime(goal.completedAt ?? goal.updatedAt)}
+              </>
+            ) : (
+              dueDateText
+            )}
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {goal.status === 'active' || goal.status === 'late' ? (
+              <button
+                type="button"
+                onClick={() => onConclude(goal.id)}
+                className="rounded-xl border border-zinc-300/90 bg-zinc-100/90 px-3 py-1.5 text-sm font-medium text-zinc-800 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
+              >
+                Concluir
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={() => onConclude(goal.id)}
+              onClick={() => onEdit(goal)}
               className="rounded-xl border border-zinc-300/90 bg-zinc-100/90 px-3 py-1.5 text-sm font-medium text-zinc-800 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
             >
-              Concluir
+              Editar
             </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => onEdit(goal)}
-            className="rounded-xl border border-zinc-300/90 bg-zinc-100/90 px-3 py-1.5 text-sm font-medium text-zinc-800 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100"
-          >
-            Editar
-          </button>
+          </div>
         </div>
       </div>
     </article>

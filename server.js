@@ -284,6 +284,16 @@ function currentMonthPrefix() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`
 }
 
+function dateKeyFromDateLike(value) {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (trimmed.length >= 10) return trimmed.slice(0, 10)
+  }
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed.toISOString().slice(0, 10)
+}
+
 /** Lista demandas do mês agrupadas por dateKey (YYYY-MM-DD). */
 app.get('/api/day-demands', async (req, res) => {
   const userId = readUserId(req.query.userId)
@@ -408,16 +418,17 @@ app.get('/api/goals', async (req, res) => {
   const prefix = currentMonthPrefix()
   const doneRows = await prisma.dayDemand.findMany({
     where: { userId, done: true, dateKey: { startsWith: prefix } },
-    select: { category: true },
+    select: { category: true, dateKey: true },
   })
-  const doneByCategory = new Map()
-  for (const row of doneRows) {
-    const key = normalizeCategory(row.category)
-    doneByCategory.set(key, (doneByCategory.get(key) ?? 0) + 1)
-  }
 
   const computed = goals.map((goal) => {
-    const doneCount = doneByCategory.get(normalizeCategory(goal.category)) ?? 0
+    const categoryKey = normalizeCategory(goal.category)
+    const dueDateKey = goal.dueDate ? dateKeyFromDateLike(goal.dueDate) : null
+    const doneCount = doneRows.reduce((count, row) => {
+      if (normalizeCategory(row.category) !== categoryKey) return count
+      if (dueDateKey && row.dateKey > dueDateKey) return count
+      return count + 1
+    }, 0)
     const target = Math.max(1, goal.targetCount)
     const progress = Math.min(100, Math.round((doneCount / target) * 100))
     const computedStatus = isGoalLate(goal) ? 'late' : goal.status
