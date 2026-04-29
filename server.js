@@ -598,7 +598,7 @@ app.get('/api/goals', async (req, res) => {
     }, 0)
     const target = Math.max(1, goal.targetCount)
     const progress = Math.min(100, Math.round((doneCount / target) * 100))
-    const computedStatus = isGoalLate(goal) ? 'late' : goal.status
+    const computedStatus = progress >= 100 ? 'completed' : isGoalLate(goal) ? 'late' : goal.status
     return { ...goal, progress, status: computedStatus }
   })
 

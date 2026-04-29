@@ -1,4 +1,4 @@
-import { Calendar, Clock, Settings, Sparkles } from 'lucide-react'
+import { Bell, Calendar, Clock, Settings, Sparkles } from 'lucide-react'
 import { startTransition, useEffect, useState } from 'react'
 import SettingsSectionCard from '../components/settings/SettingsSectionCard'
 import SettingsToggleRow from '../components/settings/SettingsToggleRow'
@@ -7,12 +7,16 @@ import { useTickSettingsVersion } from '../hooks/useTickSettings'
 import {
   readAutoOpenTodayPanel,
   readGoalsEnabledForCurrentUser,
+  readNotificationPreferencesForCurrentUser,
   readShowClockSeconds,
+  readWaterGoalEnabledForCurrentUser,
   readWeekEnabledForCurrentUser,
   readWishlistEnabledForCurrentUser,
   writeAutoOpenTodayPanel,
   writeGoalsEnabledForCurrentUser,
+  writeNotificationPreferencesForCurrentUser,
   writeShowClockSeconds,
+  writeWaterGoalEnabledForCurrentUser,
   writeWeekEnabledForCurrentUser,
   writeWishlistEnabledForCurrentUser,
 } from '../lib/tickSettings'
@@ -24,7 +28,9 @@ export default function ConfiguracoesPage() {
   const [showSeconds, setShowSeconds] = useState(() => readShowClockSeconds())
   const [weekEnabled, setWeekEnabled] = useState(() => readWeekEnabledForCurrentUser())
   const [goalsEnabled, setGoalsEnabled] = useState(() => readGoalsEnabledForCurrentUser())
+  const [waterGoalEnabled, setWaterGoalEnabled] = useState(() => readWaterGoalEnabledForCurrentUser())
   const [wishlistEnabled, setWishlistEnabled] = useState(() => readWishlistEnabledForCurrentUser())
+  const [notificationPrefs, setNotificationPrefs] = useState(() => readNotificationPreferencesForCurrentUser())
 
   useEffect(() => {
     startTransition(() => {
@@ -32,9 +38,16 @@ export default function ConfiguracoesPage() {
       setShowSeconds(readShowClockSeconds())
       setWeekEnabled(readWeekEnabledForCurrentUser())
       setGoalsEnabled(readGoalsEnabledForCurrentUser())
+      setWaterGoalEnabled(readWaterGoalEnabledForCurrentUser())
       setWishlistEnabled(readWishlistEnabledForCurrentUser())
+      setNotificationPrefs(readNotificationPreferencesForCurrentUser())
     })
   }, [tickSettingsVersion])
+
+  const writeNotificationPrefs = (next: typeof notificationPrefs) => {
+    writeNotificationPreferencesForCurrentUser(next)
+    setNotificationPrefs(next)
+  }
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -92,6 +105,15 @@ export default function ConfiguracoesPage() {
             onChange={(next) => {
               writeGoalsEnabledForCurrentUser(next)
               setGoalsEnabled(next)
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                enabled: next ? true : notificationPrefs.enabled,
+                categories: {
+                  ...notificationPrefs.categories,
+                  progress: next ? true : false,
+                },
+                waterRemindersEnabled: next ? true : false,
+              })
             }}
           />
           <SettingsToggleRow
@@ -104,6 +126,150 @@ export default function ConfiguracoesPage() {
               setWishlistEnabled(next)
             }}
           />
+          <SettingsToggleRow
+            id="toggle-water-goal"
+            label="Usar meta de água"
+            description="Exibe ou oculta o card de hidratação na página de metas para este usuário."
+            checked={waterGoalEnabled}
+            onChange={(next) => {
+              writeWaterGoalEnabledForCurrentUser(next)
+              setWaterGoalEnabled(next)
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                enabled: next ? true : notificationPrefs.enabled,
+                waterRemindersEnabled: next ? true : false,
+              })
+            }}
+          />
+        </SettingsSectionCard>
+
+        <SettingsSectionCard icon={Bell} title="Notificações" fillHeight>
+          <SettingsToggleRow
+            id="toggle-notifications-enabled"
+            label="Ativar notificações"
+            description="Controla o envio imediato de notificações no sistema."
+            checked={notificationPrefs.enabled}
+            onChange={(next) => {
+              writeNotificationPrefs({ ...notificationPrefs, enabled: next })
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-notifications-push"
+            label="Canal Push"
+            description="Permite receber alertas rápidos do sistema por push."
+            checked={notificationPrefs.channels.push}
+            onChange={(next) => {
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                channels: { ...notificationPrefs.channels, push: next },
+              })
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-notifications-email"
+            label="Canal Email"
+            description="Permite receber notificações por email."
+            checked={notificationPrefs.channels.email}
+            onChange={(next) => {
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                channels: { ...notificationPrefs.channels, email: next },
+              })
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-notifications-reminders"
+            label="Lembretes"
+            description="Notificações de tarefas e metas próximas do prazo."
+            checked={notificationPrefs.categories.reminders}
+            onChange={(next) => {
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                categories: { ...notificationPrefs.categories, reminders: next },
+              })
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-notifications-water"
+            label="Lembretes de água"
+            description="Quando ativo, envia lembretes de hidratação ao longo do dia."
+            checked={notificationPrefs.waterRemindersEnabled}
+            onChange={(next) => {
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                waterRemindersEnabled: next,
+              })
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-notifications-progress"
+            label="Progresso"
+            description="Notificações de marcos e evolução nas metas."
+            checked={notificationPrefs.categories.progress}
+            onChange={(next) => {
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                categories: { ...notificationPrefs.categories, progress: next },
+              })
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-notifications-alerts"
+            label="Alertas críticos"
+            description="Notificações de pendências e atrasos com prioridade alta."
+            checked={notificationPrefs.categories.alerts}
+            onChange={(next) => {
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                categories: { ...notificationPrefs.categories, alerts: next },
+              })
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-quiet-hours"
+            label="Horário de silêncio"
+            description="Silencia notificações não críticas entre os horários escolhidos."
+            checked={notificationPrefs.quietHours.enabled}
+            onChange={(next) => {
+              writeNotificationPrefs({
+                ...notificationPrefs,
+                quietHours: { ...notificationPrefs.quietHours, enabled: next },
+              })
+            }}
+          />
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">Intervalo padrão: 22:00 até 07:00</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <span>Início do silêncio</span>
+                <input
+                  type="time"
+                  value={notificationPrefs.quietHours.start}
+                  onChange={(event) => {
+                    writeNotificationPrefs({
+                      ...notificationPrefs,
+                      quietHours: { ...notificationPrefs.quietHours, start: event.currentTarget.value },
+                    })
+                  }}
+                  className="h-10 rounded-xl border border-zinc-300/80 bg-white/85 px-3 text-sm text-zinc-900 outline-none transition focus:border-red-400/80 dark:border-white/15 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/70"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <span>Fim do silêncio</span>
+                <input
+                  type="time"
+                  value={notificationPrefs.quietHours.end}
+                  onChange={(event) => {
+                    writeNotificationPrefs({
+                      ...notificationPrefs,
+                      quietHours: { ...notificationPrefs.quietHours, end: event.currentTarget.value },
+                    })
+                  }}
+                  className="h-10 rounded-xl border border-zinc-300/80 bg-white/85 px-3 text-sm text-zinc-900 outline-none transition focus:border-red-400/80 dark:border-white/15 dark:bg-black/40 dark:text-zinc-100 dark:focus:border-red-400/70"
+                />
+              </label>
+            </div>
+          </div>
         </SettingsSectionCard>
 
         <SettingsSectionCard icon={Sparkles} title="Sobre" fillHeight>

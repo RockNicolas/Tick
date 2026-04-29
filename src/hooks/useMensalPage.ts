@@ -11,7 +11,10 @@ import type { MonthlyDemand } from '../types/monthlyDemand'
 import { colorFromPriority } from '../lib/monthDemandColors'
 import { buildMonthCells, MENSAL_WEEK_HEADERS } from '../lib/mensalMonthGrid'
 import { readAutoOpenTodayPanel, readShowClockSeconds } from '../lib/tickSettings'
+import { triggerNotificationEvent } from '../lib/tickNotifications'
 import { useTickSettingsVersion } from './useTickSettings'
+
+const DEMAND_REMINDER_LEAD_MINUTES = 30
 
 export function useMensalPage() {
   const [now, setNow] = useState(() => new Date())
@@ -31,6 +34,25 @@ export function useMensalPage() {
 
   const monthHydratedRef = useRef<string | null>(null)
   const skipNextSaveRef = useRef(false)
+  const saveTimerRef = useRef<number | null>(null)
+  const saveInFlightRef = useRef(false)
+  const queuedSaveRef = useRef<{ year: number; month: number; payload: DemandsByDate } | null>(null)
+
+  const flushQueuedSave = useCallback(() => {
+    if (saveInFlightRef.current) return
+    const next = queuedSaveRef.current
+    if (!next) return
+    queuedSaveRef.current = null
+    saveInFlightRef.current = true
+    saveDayDemandsForMonth(next.year, next.month, next.payload)
+      .catch((error) => {
+        console.error('[Mensal] Falha ao salvar demandas no servidor:', error)
+      })
+      .finally(() => {
+        saveInFlightRef.current = false
+        if (queuedSaveRef.current) flushQueuedSave()
+      })
+  }, [])
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 1000)
@@ -41,6 +63,11 @@ export function useMensalPage() {
     const key = `${calendarYear}-${calendarMonth}`
     let cancelled = false
     monthHydratedRef.current = null
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    queuedSaveRef.current = null
 
     ;(async () => {
       try {
@@ -73,14 +100,22 @@ export function useMensalPage() {
 
     const payload = pickMonthEntries(demandsByDate, calendarYear, calendarMonth)
 
-    const handle = window.setTimeout(() => {
-      saveDayDemandsForMonth(calendarYear, calendarMonth, payload).catch((error) => {
-        console.error('[Mensal] Falha ao salvar demandas no servidor:', error)
-      })
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current)
+    }
+    saveTimerRef.current = window.setTimeout(() => {
+      queuedSaveRef.current = { year: calendarYear, month: calendarMonth, payload }
+      flushQueuedSave()
+      saveTimerRef.current = null
     }, 600)
 
-    return () => window.clearTimeout(handle)
-  }, [demandsByDate, calendarYear, calendarMonth])
+    return () => {
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = null
+      }
+    }
+  }, [demandsByDate, calendarYear, calendarMonth, flushQueuedSave])
 
   useEffect(() => {
     const onDemandsUpdated = (event: Event) => {
@@ -213,6 +248,24 @@ export function useMensalPage() {
     newDemandEndTime,
   ])
 
+  useEffect(() => {
+    const today = new Date()
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    for (const [dateKey, demands] of Object.entries(demandsByDate)) {
+      const demandDate = new Date(`${dateKey}T00:00:00`)
+      if (Number.isNaN(demandDate.getTime())) continue
+      if (demandDate >= todayStart) continue
+      const hasOverdue = demands.some((demand) => !demand.done)
+      if (!hasOverdue) continue
+      triggerNotificationEvent('overdue_critical', {
+        title: 'Atividade em atraso',
+        body: `Existe atividade pendente desde ${dateKey}.`,
+        dedupeKey: `overdue_critical:demand:${dateKey}`,
+        minIntervalMs: 30 * 60 * 1000,
+      })
+    }
+  }, [demandsByDate])
+
   const updateDemand = useCallback(
     (demandIndex: number, next: MonthlyDemand) => {
       if (selectedDateKey === null) return
@@ -285,6 +338,40 @@ export function useMensalPage() {
       })
     }
   }, [todayDay, todayDemandsCount, tickSettingsVersion])
+
+  useEffect(() => {
+    const runReminderCheck = () => {
+      const now = new Date()
+      for (const [dateKey, demands] of Object.entries(demandsByDate)) {
+        for (const demand of demands) {
+          if (demand.done) continue
+          const startTime = (demand.startTime ?? '').trim()
+          if (!startTime) continue
+          if (!/^\d{2}:\d{2}$/.test(startTime)) continue
+          const scheduledAt = new Date(`${dateKey}T${startTime}:00`)
+          if (Number.isNaN(scheduledAt.getTime())) continue
+          const diffMs = scheduledAt.getTime() - now.getTime()
+          const reminderLeadMs = DEMAND_REMINDER_LEAD_MINUTES * 60 * 1000
+          const oneMinuteMs = 60 * 1000
+          if (diffMs <= 0 || diffMs > reminderLeadMs) continue
+          const minutesLeft = Math.max(1, Math.ceil(diffMs / oneMinuteMs))
+          const endTime = (demand.endTime ?? '').trim()
+          const timeRangeLabel = endTime ? `${startTime} às ${endTime}` : startTime
+          const categoryLabel = (demand.category || 'geral').toUpperCase()
+          triggerNotificationEvent('task_due_soon', {
+            title: `Nao esqueca da sua demanda: ${demand.title}`,
+            body: `Categoria: ${categoryLabel}. Horario: ${timeRangeLabel}. Faltam ${minutesLeft} minutos.`,
+            dedupeKey: `task_due_soon:${DEMAND_REMINDER_LEAD_MINUTES}min:${dateKey}:${startTime}:${demand.title.toLowerCase()}`,
+            minIntervalMs: 12 * 60 * 60 * 1000,
+          })
+        }
+      }
+    }
+
+    runReminderCheck()
+    const id = window.setInterval(runReminderCheck, 60 * 1000)
+    return () => window.clearInterval(id)
+  }, [demandsByDate])
 
   return {
     monthLabel,

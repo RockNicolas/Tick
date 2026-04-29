@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Calendar, CalendarDays, Gift, Home, Settings, Target, X } from 'lucide-react'
+import { Calendar, CalendarDays, Gift, Home, Settings, Target, UserRound, X } from 'lucide-react'
 import { SITE_LOGO_SRC, SITE_NAME } from '../constants/branding'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
@@ -18,8 +18,9 @@ const mainItems = [
 ] as const
 
 const footerItem = { to: '/configuracoes', label: 'Configurações', icon: Settings, end: false } as const
+const profileFooterItem = { to: '/perfil', label: 'Perfil', icon: UserRound, end: false } as const
 
-type NavItem = (typeof mainItems)[number] | typeof footerItem
+type NavItem = (typeof mainItems)[number] | typeof footerItem | typeof profileFooterItem
 
 function NavRow({
   item,
@@ -155,6 +156,13 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         </div>
 
         <div className="mt-2 shrink-0 border-t border-zinc-200/70 pt-2 dark:border-white/[0.06]">
+          {isMobile ? (
+            <NavRow
+              item={profileFooterItem}
+              onNavigate={closeIfMobile}
+              desktopHoverExpand={!isMobile}
+            />
+          ) : null}
           <NavRow
             item={footerItem}
             onNavigate={closeIfMobile}

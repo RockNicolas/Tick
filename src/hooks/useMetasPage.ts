@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DAY_DEMANDS_UPDATED_EVENT } from '../api/dayDemands'
 import { createGoal, deleteGoal, fetchGoals, type Goal, type GoalStatus, updateGoal } from '../api/goals'
+import { triggerNotificationEvent } from '../lib/tickNotifications'
 
 export function useMetasPage() {
   const [selectedTab, setSelectedTab] = useState<GoalStatus>('active')
@@ -20,17 +21,48 @@ export function useMetasPage() {
   const [editTargetCount, setEditTargetCount] = useState(1)
   const [editDueDate, setEditDueDate] = useState('')
 
+  function normalizeGoalStatus(goal: Goal): Goal {
+    if (goal.progress >= 100 && goal.status !== 'completed') {
+      return { ...goal, status: 'completed' }
+    }
+    return goal
+  }
+
   async function loadGoals(tab: GoalStatus) {
     setIsLoading(true)
     setError('')
     try {
       const data = await fetchGoals(tab)
-      setGoals(data)
+      const normalized = data.map(normalizeGoalStatus).filter((goal) => {
+        if (tab === 'active') return goal.status === 'active'
+        if (tab === 'completed') return goal.status === 'completed'
+        return goal.status === 'late'
+      })
+      setGoals(normalized)
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar metas')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  async function syncAutoCompletedGoals() {
+    const allGoals = await fetchGoals()
+    let hasAutoCompletedGoal = false
+    for (const goal of allGoals) {
+      if (goal.progress < 100) continue
+      if (goal.status !== 'completed') {
+        await updateGoal(goal.id, { status: 'completed', progress: 100 })
+      }
+      hasAutoCompletedGoal = true
+      triggerNotificationEvent('goal_progress_milestone', {
+        title: `Meta concluida automaticamente: ${goal.title}`,
+        body: 'Parabens! Sua meta foi concluida com base nas demandas finalizadas.',
+        dedupeKey: `goal_progress_milestone:auto:${goal.id}`,
+        minIntervalMs: 365 * 24 * 60 * 60 * 1000,
+      })
+    }
+    return hasAutoCompletedGoal
   }
 
   useEffect(() => {
@@ -39,11 +71,33 @@ export function useMetasPage() {
 
   useEffect(() => {
     const onDemandsUpdated = () => {
-      void loadGoals(selectedTab)
+      void (async () => {
+        try {
+          const hasAutoCompletedGoal = await syncAutoCompletedGoals()
+          const nextTab: GoalStatus = hasAutoCompletedGoal ? 'completed' : selectedTab
+          if (hasAutoCompletedGoal) setSelectedTab('completed')
+          await loadGoals(nextTab)
+        } catch {
+          // ignore: fluxo de notificacao nao deve bloquear recarga da tela
+        }
+      })()
     }
     window.addEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated)
     return () => window.removeEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated)
   }, [selectedTab])
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const hasAutoCompletedGoal = await syncAutoCompletedGoals()
+        if (hasAutoCompletedGoal && selectedTab === 'active') {
+          setSelectedTab('completed')
+        }
+      } catch {
+        // sem bloqueio de UI
+      }
+    })()
+  }, [])
 
   useEffect(() => {
     if (!isCreateModalOpen) return
@@ -92,7 +146,8 @@ export function useMetasPage() {
       setTargetCount(4)
       setDueDate('')
       setIsCreateModalOpen(false)
-      await loadGoals(selectedTab)
+      setSelectedTab('active')
+      await loadGoals('active')
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'Falha ao criar meta')
     } finally {
@@ -103,8 +158,14 @@ export function useMetasPage() {
   async function handleConcludeGoal(goalId: string) {
     setError('')
     try {
-      await updateGoal(goalId, { status: 'completed', progress: 100 })
-      await loadGoals(selectedTab)
+      const goal = await updateGoal(goalId, { status: 'completed', progress: 100 })
+      triggerNotificationEvent('goal_progress_milestone', {
+        title: `Meta concluida: ${goal.title}`,
+        body: 'Parabens! Voce concluiu uma meta.',
+        dedupeKey: `goal_progress_milestone:completed:${goal.id}`,
+        minIntervalMs: 30 * 60 * 1000,
+      })
+      setSelectedTab('completed')
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Falha ao concluir meta')
     }
@@ -124,12 +185,20 @@ export function useMetasPage() {
     setIsSubmitting(true)
     setError('')
     try {
-      await updateGoal(editingGoal.id, {
+      const updated = await updateGoal(editingGoal.id, {
         title: editTitle.trim(),
         category: editCategory.trim() || 'geral',
         targetCount: Math.max(1, editTargetCount),
         dueDate: editDueDate || '',
       })
+      if (updated.progress >= 100 || updated.status === 'completed') {
+        triggerNotificationEvent('goal_progress_milestone', {
+          title: `Marco de progresso: ${updated.title}`,
+          body: 'Uma meta alcancou um marco importante.',
+          dedupeKey: `goal_progress_milestone:goal:${updated.id}:${updated.progress}`,
+          minIntervalMs: 30 * 60 * 1000,
+        })
+      }
       setEditingGoal(null)
       await loadGoals(selectedTab)
     } catch (editError) {
@@ -154,6 +223,25 @@ export function useMetasPage() {
       setIsSubmitting(false)
     }
   }
+
+  useEffect(() => {
+    if (goals.length === 0) return
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    for (const goal of goals) {
+      if (!goal.dueDate) continue
+      const dueDate = new Date(goal.dueDate)
+      if (Number.isNaN(dueDate.getTime())) continue
+      if (dueDate >= todayStart) continue
+      if (goal.status === 'completed') continue
+      triggerNotificationEvent('overdue_critical', {
+        title: `Meta em atraso: ${goal.title}`,
+        body: 'Existe uma meta com prazo vencido que precisa de atencao.',
+        dedupeKey: `overdue_critical:goal:${goal.id}`,
+        minIntervalMs: 30 * 60 * 1000,
+      })
+    }
+  }, [goals])
 
   return {
     selectedTab,
