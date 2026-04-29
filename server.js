@@ -249,6 +249,17 @@ function serializeGoal(goal) {
   }
 }
 
+function serializeWishItem(item) {
+  return {
+    id: item.id,
+    title: item.title,
+    link: item.link,
+    done: item.done,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
+}
+
 function startOfToday() {
   const now = new Date()
   return new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -569,6 +580,106 @@ app.delete('/api/goals/:goalId', async (req, res) => {
   }
 
   await prisma.goal.delete({ where: { id: goalId } })
+  res.json({ ok: true })
+})
+
+app.get('/api/wishlist', async (req, res) => {
+  const userId = readUserId(req.query.userId)
+  if (!userId) return res.status(400).json({ error: 'userId is required' })
+
+  const items = await prisma.wishItem.findMany({
+    where: { userId },
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+  })
+
+  res.json({ items: items.map(serializeWishItem) })
+})
+
+app.post('/api/wishlist', async (req, res) => {
+  const userId = readUserId(req.body?.userId)
+  if (!userId) return res.status(400).json({ error: 'userId is required' })
+
+  const title = typeof req.body?.title === 'string' ? req.body.title.trim() : ''
+  const link = typeof req.body?.link === 'string' ? req.body.link.trim() : ''
+  if (!title) return res.status(400).json({ error: 'titulo e obrigatorio' })
+  if (!link) return res.status(400).json({ error: 'link e obrigatorio' })
+
+  const last = await prisma.wishItem.findFirst({
+    where: { userId },
+    orderBy: { sortOrder: 'desc' },
+    select: { sortOrder: true },
+  })
+
+  const item = await prisma.wishItem.create({
+    data: {
+      userId,
+      title,
+      link,
+      done: false,
+      sortOrder: (last?.sortOrder ?? -1) + 1,
+    },
+  })
+
+  res.status(201).json({ item: serializeWishItem(item) })
+})
+
+app.patch('/api/wishlist/:wishItemId', async (req, res) => {
+  const userId = readUserId(req.body?.userId)
+  if (!userId) return res.status(400).json({ error: 'userId is required' })
+
+  const wishItemId = typeof req.params.wishItemId === 'string' ? req.params.wishItemId : ''
+  if (!wishItemId) return res.status(400).json({ error: 'wishItemId is required' })
+
+  const existing = await prisma.wishItem.findUnique({ where: { id: wishItemId } })
+  if (!existing || existing.userId !== userId) {
+    return res.status(404).json({ error: 'item de desejo nao encontrado' })
+  }
+
+  const data = {}
+  if (typeof req.body?.title === 'string') {
+    const title = req.body.title.trim()
+    if (!title) return res.status(400).json({ error: 'titulo invalido' })
+    data.title = title
+  }
+  if (typeof req.body?.link === 'string') {
+    const link = req.body.link.trim()
+    if (!link) return res.status(400).json({ error: 'link invalido' })
+    data.link = link
+  }
+  if (req.body?.done !== undefined) {
+    data.done = Boolean(req.body.done)
+  }
+  if (req.body?.sortOrder !== undefined) {
+    const sortOrder = Number(req.body.sortOrder)
+    if (!Number.isFinite(sortOrder)) return res.status(400).json({ error: 'sortOrder invalido' })
+    data.sortOrder = Math.max(0, Math.round(sortOrder))
+  }
+
+  if (Object.keys(data).length === 0) {
+    return res.status(400).json({ error: 'nenhum campo para atualizar' })
+  }
+
+  const item = await prisma.wishItem.update({
+    where: { id: wishItemId },
+    data,
+  })
+
+  res.json({ item: serializeWishItem(item) })
+})
+
+app.delete('/api/wishlist/:wishItemId', async (req, res) => {
+  const userId = readUserId(req.body?.userId)
+  if (!userId) return res.status(400).json({ error: 'userId is required' })
+
+  const wishItemId = typeof req.params.wishItemId === 'string' ? req.params.wishItemId : ''
+  if (!wishItemId) return res.status(400).json({ error: 'wishItemId is required' })
+
+  const existing = await prisma.wishItem.findUnique({ where: { id: wishItemId } })
+  if (!existing || existing.userId !== userId) {
+    return res.status(404).json({ error: 'item de desejo nao encontrado' })
+  }
+
+  await prisma.wishItem.delete({ where: { id: wishItemId } })
   res.json({ ok: true })
 })
 

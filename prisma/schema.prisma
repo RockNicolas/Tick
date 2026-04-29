@@ -15,6 +15,7 @@ model User {
   createdAt DateTime @default(now())
   demands   DayDemand[]
   goals     Goal[]
+  wishItems WishItem[]
 }
 
 model Item {
@@ -66,4 +67,19 @@ model Goal {
   @@index([userId, status])
   @@index([userId, dueDate])
   @@index([userId, completedAt])
+}
+
+model WishItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  link      String
+  done      Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, sortOrder])
+  @@index([userId, done])
 }

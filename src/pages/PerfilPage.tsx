@@ -5,9 +5,10 @@ import { useEffect, useMemo, useState } from 'react'
 import PerfilConquistasCard from '../components/perfil/PerfilConquistasCard'
 import PerfilHeroCard from '../components/perfil/PerfilHeroCard'
 import PerfilPerformanceHubCard from '../components/perfil/PerfilPerformanceHubCard'
+import PerfilWishlistResumoCard from '../components/perfil/PerfilWishlistResumoCard'
 import { type WishItem } from '../components/perfil/types'
-import PerfilWishlistMarcosCard from '../components/perfil/PerfilWishlistMarcosCard'
 import { fetchGoals } from '../api/goals'
+import { fetchWishlist } from '../api/wishlist'
 import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
 
 const FIXED_GOAL_CATEGORIES = [
@@ -41,33 +42,23 @@ export default function PerfilPage() {
   const [monthlyFocus, setMonthlyFocus] = useState('sem foco definido')
   const [monthlyCategoryStats, setMonthlyCategoryStats] = useState<MonthlyCategoryStat[]>([])
   const [wishItems, setWishItems] = useState<WishItem[]>([])
-  const [newWishTitle, setNewWishTitle] = useState('')
-  const [newWishPrice, setNewWishPrice] = useState('')
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('tick:wishlist')
-      if (!raw) return
-      const parsed = JSON.parse(raw) as WishItem[]
-      if (!Array.isArray(parsed)) return
-      const sanitized = parsed
-        .filter((item) => item && typeof item.title === 'string')
-        .map((item) => ({
-          id: String(item.id || crypto.randomUUID()),
-          title: item.title.trim(),
-          price: typeof item.price === 'string' ? item.price : '',
-          done: Boolean(item.done),
-        }))
-        .filter((item) => item.title.length > 0)
-      setWishItems(sanitized)
-    } catch {
-      setWishItems([])
+    let cancelled = false
+    ;(async () => {
+      try {
+        const items = await fetchWishlist()
+        if (cancelled) return
+        setWishItems(items.map(({ id, title, link, done }) => ({ id, title, link, done })))
+      } catch {
+        if (cancelled) return
+        setWishItems([])
+      }
+    })()
+    return () => {
+      cancelled = true
     }
   }, [])
-
-  useEffect(() => {
-    localStorage.setItem('tick:wishlist', JSON.stringify(wishItems))
-  }, [wishItems])
 
   useEffect(() => {
     let cancelled = false
@@ -166,28 +157,7 @@ export default function PerfilPage() {
         </div>
 
         <div className="min-w-0">
-          <PerfilWishlistMarcosCard
-            wishItems={wishItems}
-            newWishTitle={newWishTitle}
-            newWishPrice={newWishPrice}
-            onNewWishTitleChange={setNewWishTitle}
-            onNewWishPriceChange={setNewWishPrice}
-            onAddWishItem={() => {
-              const title = newWishTitle.trim()
-              if (!title) return
-              setWishItems((prev) => [
-                ...prev,
-                { id: crypto.randomUUID(), title, price: newWishPrice.trim(), done: false },
-              ])
-              setNewWishTitle('')
-              setNewWishPrice('')
-            }}
-            onToggleWishItem={(id) =>
-              setWishItems((prev) =>
-                prev.map((entry) => (entry.id === id ? { ...entry, done: !entry.done } : entry)),
-              )
-            }
-          />
+          <PerfilWishlistResumoCard wishItems={wishItems} />
         </div>
       </div>
     </div>

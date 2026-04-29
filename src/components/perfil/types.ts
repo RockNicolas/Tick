@@ -8,6 +8,6 @@ export type MonthlyCategoryStat = {
 export type WishItem = {
   id: string
   title: string
-  price: string
+  link: string
   done: boolean
 }

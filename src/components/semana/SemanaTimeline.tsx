@@ -1,4 +1,4 @@
-import { BookOpen, Dumbbell, HandCoins, Tag } from 'lucide-react'
+import { BookOpen, Dumbbell, HandCoins, MessageSquareText, Tag } from 'lucide-react'
 import { useMemo } from 'react'
 import type { DemandsByDate } from '../../api/dayDemands'
 import {
@@ -151,7 +151,7 @@ export default function SemanaTimeline({
                             gridRow: `${rowStart} / ${rowEnd}`,
                             zIndex: 2 + index,
                           }}
-                          title={`${d.startTime}–${d.endTime}`}
+                          title={d.note?.trim() ? `${d.startTime}–${d.endTime}\n${d.note.trim()}` : `${d.startTime}–${d.endTime}`}
                         >
                           <div
                             className={`flex h-full min-h-0 overflow-hidden rounded-md border ${hasCustomColor ? 'text-zinc-900 dark:text-white' : body} ${d.done ? 'opacity-50' : ''}`}
@@ -169,7 +169,8 @@ export default function SemanaTimeline({
                               style={hasCustomColor ? { backgroundColor: customColor } : undefined}
                               aria-hidden
                             />
-                            <div className="flex min-w-0 flex-1 items-start gap-1 px-1 py-0.5 sm:px-1.5">
+                            <div className="flex min-w-0 flex-1 flex-col px-1 py-0.5 sm:px-1.5">
+                              <div className="flex min-w-0 items-start gap-1">
                               <button
                                 type="button"
                                 aria-label={
@@ -188,6 +189,15 @@ export default function SemanaTimeline({
                               <span className="min-w-0 flex-1 truncate font-medium leading-snug">
                                 {d.title}
                               </span>
+                              {d.note?.trim() ? (
+                                <MessageSquareText className="mt-0.5 h-3 w-3 shrink-0 opacity-70" aria-hidden />
+                              ) : null}
+                              </div>
+                              {d.note?.trim() ? (
+                                <p className="min-w-0 truncate pl-[1.18rem] text-[10px] leading-snug opacity-80">
+                                  {d.note.trim()}
+                                </p>
+                              ) : null}
                             </div>
                           </div>
                         </div>
