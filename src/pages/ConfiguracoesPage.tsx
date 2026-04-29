@@ -1,4 +1,4 @@
-import { Calendar, Clock, Keyboard, Settings, Sparkles } from 'lucide-react'
+import { Calendar, Clock, Settings, Sparkles } from 'lucide-react'
 import { startTransition, useEffect, useState } from 'react'
 import SettingsSectionCard from '../components/settings/SettingsSectionCard'
 import SettingsToggleRow from '../components/settings/SettingsToggleRow'
@@ -6,9 +6,15 @@ import { SITE_NAME } from '../constants/branding'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
 import {
   readAutoOpenTodayPanel,
+  readGoalsEnabledForCurrentUser,
   readShowClockSeconds,
+  readWeekEnabledForCurrentUser,
+  readWishlistEnabledForCurrentUser,
   writeAutoOpenTodayPanel,
+  writeGoalsEnabledForCurrentUser,
   writeShowClockSeconds,
+  writeWeekEnabledForCurrentUser,
+  writeWishlistEnabledForCurrentUser,
 } from '../lib/tickSettings'
 
 export default function ConfiguracoesPage() {
@@ -16,11 +22,17 @@ export default function ConfiguracoesPage() {
 
   const [autoOpen, setAutoOpen] = useState(() => readAutoOpenTodayPanel())
   const [showSeconds, setShowSeconds] = useState(() => readShowClockSeconds())
+  const [weekEnabled, setWeekEnabled] = useState(() => readWeekEnabledForCurrentUser())
+  const [goalsEnabled, setGoalsEnabled] = useState(() => readGoalsEnabledForCurrentUser())
+  const [wishlistEnabled, setWishlistEnabled] = useState(() => readWishlistEnabledForCurrentUser())
 
   useEffect(() => {
     startTransition(() => {
       setAutoOpen(readAutoOpenTodayPanel())
       setShowSeconds(readShowClockSeconds())
+      setWeekEnabled(readWeekEnabledForCurrentUser())
+      setGoalsEnabled(readGoalsEnabledForCurrentUser())
+      setWishlistEnabled(readWishlistEnabledForCurrentUser())
     })
   }, [tickSettingsVersion])
 
@@ -61,25 +73,51 @@ export default function ConfiguracoesPage() {
           />
         </SettingsSectionCard>
 
-        <SettingsSectionCard icon={Keyboard} title="Atalhos" fillHeight>
-          <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <li>
-              <span className="font-medium text-zinc-800 dark:text-zinc-300">Esc</span> — fecha o painel de
-              demandas do dia (quando aberto).
-            </li>
-            <li>
-              <span className="font-medium text-zinc-800 dark:text-zinc-300">Esc</span> — dentro do modal de
-              edição de uma demanda, fecha só o modal.
-            </li>
-          </ul>
+        <SettingsSectionCard icon={Sparkles} title="Módulos" fillHeight>
+          <SettingsToggleRow
+            id="toggle-week"
+            label="Usar visão Semana"
+            description="Exibe ou oculta o módulo Semana no menu lateral para este usuário."
+            checked={weekEnabled}
+            onChange={(next) => {
+              writeWeekEnabledForCurrentUser(next)
+              setWeekEnabled(next)
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-goals"
+            label="Usar módulo Metas"
+            description="Exibe ou oculta o módulo Metas no menu lateral para este usuário."
+            checked={goalsEnabled}
+            onChange={(next) => {
+              writeGoalsEnabledForCurrentUser(next)
+              setGoalsEnabled(next)
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-wishlist"
+            label="Usar lista de desejos"
+            description="Quando desativado, o menu Desejos e o resumo no perfil ficam ocultos para este usuário."
+            checked={wishlistEnabled}
+            onChange={(next) => {
+              writeWishlistEnabledForCurrentUser(next)
+              setWishlistEnabled(next)
+            }}
+          />
         </SettingsSectionCard>
 
         <SettingsSectionCard icon={Sparkles} title="Sobre" fillHeight>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            <span className="font-semibold text-zinc-900 dark:text-zinc-200">{SITE_NAME}</span> — agenda e
-            demandas com foco no mês atual. Versão do pacote:{' '}
-            <span className="tabular-nums text-zinc-800 dark:text-zinc-300">0.0.0</span>
-          </p>
+          <div className="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
+            <p>
+              <span className="font-semibold text-zinc-900 dark:text-zinc-200">{SITE_NAME}</span> é um sistema de
+              organização pessoal com agenda mensal e semanal, gestão de metas e lista de desejos, tudo integrado
+              em um único painel.
+            </p>
+            <p>
+              Primeira versão:{' '}
+              <span className="tabular-nums font-semibold text-zinc-900 dark:text-zinc-200">1.0.0</span>
+            </p>
+          </div>
         </SettingsSectionCard>
       </div>
     </div>

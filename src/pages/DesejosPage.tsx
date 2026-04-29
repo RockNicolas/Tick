@@ -4,8 +4,12 @@ import DesejosPageHeader from '../components/desejos/DesejosPageHeader'
 import DesejosSummary from '../components/desejos/DesejosSummary'
 import DesejosWishlistSection from '../components/desejos/DesejosWishlistSection'
 import type { WishItem } from '../components/perfil/types'
+import { useTickSettingsVersion } from '../hooks/useTickSettings'
+import { readWishlistEnabledForCurrentUser } from '../lib/tickSettings'
 
 export default function DesejosPage() {
+  const tickSettingsVersion = useTickSettingsVersion()
+  const wishlistEnabled = useMemo(() => readWishlistEnabledForCurrentUser(), [tickSettingsVersion])
   const [wishItems, setWishItems] = useState<WishItem[]>([])
   const [newWishTitle, setNewWishTitle] = useState('')
   const [newWishLink, setNewWishLink] = useState('')
@@ -14,6 +18,11 @@ export default function DesejosPage() {
   const [wishlistError, setWishlistError] = useState('')
 
   useEffect(() => {
+    if (!wishlistEnabled) {
+      setWishItems([])
+      setWishlistError('')
+      return
+    }
     let cancelled = false
     ;(async () => {
       try {
@@ -40,9 +49,20 @@ export default function DesejosPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [wishlistEnabled])
 
   const doneWishCount = useMemo(() => wishItems.filter((item) => item.done).length, [wishItems])
+
+  if (!wishlistEnabled) {
+    return (
+      <div className="space-y-4">
+        <DesejosPageHeader />
+        <p className="rounded-xl border border-zinc-300/70 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
+          A lista de desejos está desativada para este usuário. Ative em Configurações para voltar a usar.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-w-0 space-y-4">

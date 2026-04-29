@@ -2,6 +2,12 @@ import { NavLink } from 'react-router-dom'
 import { Calendar, CalendarDays, Gift, Home, Settings, Target, X } from 'lucide-react'
 import { SITE_LOGO_SRC, SITE_NAME } from '../constants/branding'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { useTickSettingsVersion } from '../hooks/useTickSettings'
+import {
+  readGoalsEnabledForCurrentUser,
+  readWeekEnabledForCurrentUser,
+  readWishlistEnabledForCurrentUser,
+} from '../lib/tickSettings'
 
 const mainItems = [
   { to: '/', label: 'Início', icon: Home, end: true },
@@ -63,10 +69,20 @@ type SidebarProps = {
 
 export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const isMobile = useMediaQuery('(max-device-width: 767px)')
+  useTickSettingsVersion()
+  const weekEnabled = readWeekEnabledForCurrentUser()
+  const goalsEnabled = readGoalsEnabledForCurrentUser()
+  const wishlistEnabled = readWishlistEnabledForCurrentUser()
   const drawerInert = isMobile && !mobileOpen
   const closeIfMobile = () => {
     if (isMobile) onClose()
   }
+  const visibleMainItems = mainItems.filter((item) => {
+    if (item.to === '/semana' && !weekEnabled) return false
+    if (item.to === '/metas' && !goalsEnabled) return false
+    if (item.to === '/desejos' && !wishlistEnabled) return false
+    return true
+  })
 
   return (
     <aside
@@ -128,7 +144,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
               decoding="async"
             />
           </NavLink>
-          {mainItems.map((item) => (
+          {visibleMainItems.map((item) => (
             <NavRow
               key={item.to}
               item={item}

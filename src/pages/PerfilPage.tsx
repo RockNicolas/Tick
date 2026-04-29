@@ -9,6 +9,8 @@ import PerfilWishlistResumoCard from '../components/perfil/PerfilWishlistResumoC
 import { type WishItem } from '../components/perfil/types'
 import { fetchGoals } from '../api/goals'
 import { fetchWishlist } from '../api/wishlist'
+import { useTickSettingsVersion } from '../hooks/useTickSettings'
+import { readWishlistEnabledForCurrentUser } from '../lib/tickSettings'
 import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
 
 const FIXED_GOAL_CATEGORIES = [
@@ -34,7 +36,12 @@ function normalizeGoalCategory(raw: string) {
 }
 
 export default function PerfilPage() {
+  const tickSettingsVersion = useTickSettingsVersion()
   const user = useMemo(() => readTickStoredUser(), [])
+  const wishlistEnabled = useMemo(
+    () => readWishlistEnabledForCurrentUser(),
+    [tickSettingsVersion, user?.id],
+  )
   const userName = user?.name?.trim() ? user.name : 'Usuário Tick'
   const userEmail = user?.email ?? 'usuario@tick.app'
   const initials = getUserInitials(userName)
@@ -44,6 +51,10 @@ export default function PerfilPage() {
   const [wishItems, setWishItems] = useState<WishItem[]>([])
 
   useEffect(() => {
+    if (!wishlistEnabled) {
+      setWishItems([])
+      return
+    }
     let cancelled = false
     ;(async () => {
       try {
@@ -67,7 +78,7 @@ export default function PerfilPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [wishlistEnabled])
 
   useEffect(() => {
     let cancelled = false
@@ -134,7 +145,10 @@ export default function PerfilPage() {
     return sorted[0]?.label ?? 'metas'
   }, [monthlyCategoryStats])
 
-  const doneWishCount = useMemo(() => wishItems.filter((item) => item.done).length, [wishItems])
+  const doneWishCount = useMemo(
+    () => (wishlistEnabled ? wishItems.filter((item) => item.done).length : 0),
+    [wishItems, wishlistEnabled],
+  )
   const chartPercents = useMemo(() => {
     const fallback = [0, 0, 0, 0]
     if (monthlyCategoryStats.length < 4) return fallback
@@ -165,9 +179,11 @@ export default function PerfilPage() {
           />
         </div>
 
-        <div className="min-w-0">
-          <PerfilWishlistResumoCard wishItems={wishItems} />
-        </div>
+        {wishlistEnabled ? (
+          <div className="min-w-0">
+            <PerfilWishlistResumoCard wishItems={wishItems} />
+          </div>
+        ) : null}
       </div>
     </div>
   )

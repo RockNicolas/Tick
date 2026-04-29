@@ -1,8 +1,13 @@
+import { readTickStoredUser } from './tickUser'
+
 const EVENT = 'tick-settings-changed'
 
 const KEYS = {
   autoOpenToday: 'tick:settings:autoOpenToday',
   showClockSeconds: 'tick:settings:showClockSeconds',
+  wishlistEnabledPrefix: 'tick:settings:wishlistEnabled',
+  weekEnabledPrefix: 'tick:settings:weekEnabled',
+  goalsEnabledPrefix: 'tick:settings:goalsEnabled',
 } as const
 
 export function emitTickSettingsChanged() {
@@ -56,4 +61,58 @@ export function readShowClockSeconds(): boolean {
 
 export function writeShowClockSeconds(value: boolean) {
   writeBool(KEYS.showClockSeconds, value)
+}
+
+function wishlistEnabledKeyForUser(userId: string) {
+  return `${KEYS.wishlistEnabledPrefix}:${userId}`
+}
+
+function weekEnabledKeyForUser(userId: string) {
+  return `${KEYS.weekEnabledPrefix}:${userId}`
+}
+
+function goalsEnabledKeyForUser(userId: string) {
+  return `${KEYS.goalsEnabledPrefix}:${userId}`
+}
+
+/**
+ * Controla se a lista de desejos fica ativa para o usuário logado.
+ * Padrão: true (ativo).
+ */
+export function readWishlistEnabledForCurrentUser(): boolean {
+  const user = readTickStoredUser()
+  if (!user?.id) return true
+  return readBool(wishlistEnabledKeyForUser(user.id), true)
+}
+
+export function writeWishlistEnabledForCurrentUser(value: boolean) {
+  const user = readTickStoredUser()
+  if (!user?.id) return
+  writeBool(wishlistEnabledKeyForUser(user.id), value)
+}
+
+/** Controla se a página Semana fica ativa para o usuário logado. */
+export function readWeekEnabledForCurrentUser(): boolean {
+  const user = readTickStoredUser()
+  if (!user?.id) return true
+  return readBool(weekEnabledKeyForUser(user.id), true)
+}
+
+export function writeWeekEnabledForCurrentUser(value: boolean) {
+  const user = readTickStoredUser()
+  if (!user?.id) return
+  writeBool(weekEnabledKeyForUser(user.id), value)
+}
+
+/** Controla se o módulo de Metas fica ativo para o usuário logado. */
+export function readGoalsEnabledForCurrentUser(): boolean {
+  const user = readTickStoredUser()
+  if (!user?.id) return true
+  return readBool(goalsEnabledKeyForUser(user.id), true)
+}
+
+export function writeGoalsEnabledForCurrentUser(value: boolean) {
+  const user = readTickStoredUser()
+  if (!user?.id) return
+  writeBool(goalsEnabledKeyForUser(user.id), value)
 }

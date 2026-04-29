@@ -256,15 +256,15 @@ export default function DesejosWishlistSection({
                     <span
                       className={`rounded-full px-2 py-0.5 font-medium ${
                         item.priority === 'alta'
-                          ? 'bg-red-500/20 text-red-300'
+                          ? 'bg-red-500/20 text-red-700 dark:text-red-300'
                           : item.priority === 'baixa'
-                            ? 'bg-sky-500/20 text-sky-300'
-                            : 'bg-amber-500/20 text-amber-200'
+                            ? 'bg-sky-500/20 text-sky-700 dark:text-sky-300'
+                            : 'bg-amber-500/20 text-amber-700 dark:text-amber-200'
                       }`}
                     >
                       Prioridade: {item.priority}
                     </span>
-                    <span className="rounded-full bg-zinc-500/20 px-2 py-0.5 font-medium text-zinc-300">
+                    <span className="rounded-full bg-zinc-500/20 px-2 py-0.5 font-medium text-zinc-700 dark:text-zinc-300">
                       Categoria: {item.category}
                     </span>
                   </div>

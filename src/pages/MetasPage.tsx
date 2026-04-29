@@ -5,9 +5,23 @@ import MetasGoalsSection from '../components/metas/MetasGoalsSection'
 import MetasMilestonesColumn from '../components/metas/MetasMilestonesColumn'
 import MetasPageHeader from '../components/metas/MetasPageHeader'
 import MetasProgressCard from '../components/metas/MetasProgressCard'
+import { useTickSettingsVersion } from '../hooks/useTickSettings'
+import { readGoalsEnabledForCurrentUser } from '../lib/tickSettings'
 
 export default function MetasPage() {
+  useTickSettingsVersion()
+  const goalsEnabled = readGoalsEnabledForCurrentUser()
   const m = useMetasPage()
+
+  if (!goalsEnabled) {
+    return (
+      <div className="space-y-4">
+        <p className="rounded-xl border border-zinc-300/70 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
+          O módulo Metas está desativado para este usuário. Ative em Configurações para voltar a usar.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-full min-w-0 rounded-2xl border border-teal-300/30 bg-zinc-900/10 p-4 sm:p-5 dark:bg-black/20">
