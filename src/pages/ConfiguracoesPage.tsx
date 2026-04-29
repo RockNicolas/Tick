@@ -1,4 +1,4 @@
-import { Bell, Calendar, Clock, Settings, Sparkles } from 'lucide-react'
+import { Bell, Calendar, Clock, Settings, Sparkles, UserRound } from 'lucide-react'
 import { startTransition, useEffect, useState } from 'react'
 import SettingsSectionCard from '../components/settings/SettingsSectionCard'
 import SettingsToggleRow from '../components/settings/SettingsToggleRow'
@@ -8,6 +8,8 @@ import {
   readAutoOpenTodayPanel,
   readGoalsEnabledForCurrentUser,
   readNotificationPreferencesForCurrentUser,
+  readProfileAchievementsEnabledForCurrentUser,
+  readProfileWishlistEnabledForCurrentUser,
   readShowClockSeconds,
   readWaterGoalEnabledForCurrentUser,
   readWeekEnabledForCurrentUser,
@@ -15,6 +17,8 @@ import {
   writeAutoOpenTodayPanel,
   writeGoalsEnabledForCurrentUser,
   writeNotificationPreferencesForCurrentUser,
+  writeProfileAchievementsEnabledForCurrentUser,
+  writeProfileWishlistEnabledForCurrentUser,
   writeShowClockSeconds,
   writeWaterGoalEnabledForCurrentUser,
   writeWeekEnabledForCurrentUser,
@@ -29,6 +33,12 @@ export default function ConfiguracoesPage() {
   const [weekEnabled, setWeekEnabled] = useState(() => readWeekEnabledForCurrentUser())
   const [goalsEnabled, setGoalsEnabled] = useState(() => readGoalsEnabledForCurrentUser())
   const [waterGoalEnabled, setWaterGoalEnabled] = useState(() => readWaterGoalEnabledForCurrentUser())
+  const [profileAchievementsEnabled, setProfileAchievementsEnabled] = useState(() =>
+    readProfileAchievementsEnabledForCurrentUser(),
+  )
+  const [profileWishlistEnabled, setProfileWishlistEnabled] = useState(() =>
+    readProfileWishlistEnabledForCurrentUser(),
+  )
   const [wishlistEnabled, setWishlistEnabled] = useState(() => readWishlistEnabledForCurrentUser())
   const [notificationPrefs, setNotificationPrefs] = useState(() => readNotificationPreferencesForCurrentUser())
 
@@ -39,6 +49,8 @@ export default function ConfiguracoesPage() {
       setWeekEnabled(readWeekEnabledForCurrentUser())
       setGoalsEnabled(readGoalsEnabledForCurrentUser())
       setWaterGoalEnabled(readWaterGoalEnabledForCurrentUser())
+      setProfileAchievementsEnabled(readProfileAchievementsEnabledForCurrentUser())
+      setProfileWishlistEnabled(readProfileWishlistEnabledForCurrentUser())
       setWishlistEnabled(readWishlistEnabledForCurrentUser())
       setNotificationPrefs(readNotificationPreferencesForCurrentUser())
     })
@@ -139,6 +151,29 @@ export default function ConfiguracoesPage() {
                 enabled: next ? true : notificationPrefs.enabled,
                 waterRemindersEnabled: next ? true : false,
               })
+            }}
+          />
+        </SettingsSectionCard>
+
+        <SettingsSectionCard icon={UserRound} title="Perfil" fillHeight>
+          <SettingsToggleRow
+            id="toggle-profile-achievements"
+            label="Mostrar conquistas no perfil"
+            description="Exibe ou oculta o card de conquistas na página de perfil."
+            checked={profileAchievementsEnabled}
+            onChange={(next) => {
+              writeProfileAchievementsEnabledForCurrentUser(next)
+              setProfileAchievementsEnabled(next)
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-profile-wishlist"
+            label="Mostrar wishlist no perfil"
+            description="Exibe ou oculta o card de wishlist na página de perfil."
+            checked={profileWishlistEnabled}
+            onChange={(next) => {
+              writeProfileWishlistEnabledForCurrentUser(next)
+              setProfileWishlistEnabled(next)
             }}
           />
         </SettingsSectionCard>

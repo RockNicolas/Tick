@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom'
-import { Calendar, CalendarDays, Gift, Home, Settings, Target, UserRound, X } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { Calendar, CalendarDays, Gift, Home, LogOut, Settings, Target, X } from 'lucide-react'
 import { SITE_LOGO_SRC, SITE_NAME } from '../constants/branding'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
@@ -18,9 +18,8 @@ const mainItems = [
 ] as const
 
 const footerItem = { to: '/configuracoes', label: 'Configurações', icon: Settings, end: false } as const
-const profileFooterItem = { to: '/perfil', label: 'Perfil', icon: UserRound, end: false } as const
 
-type NavItem = (typeof mainItems)[number] | typeof footerItem | typeof profileFooterItem
+type NavItem = (typeof mainItems)[number] | typeof footerItem
 
 function NavRow({
   item,
@@ -69,6 +68,7 @@ type SidebarProps = {
 }
 
 export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
+  const navigate = useNavigate()
   const isMobile = useMediaQuery('(max-device-width: 767px)')
   useTickSettingsVersion()
   const weekEnabled = readWeekEnabledForCurrentUser()
@@ -77,6 +77,11 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const drawerInert = isMobile && !mobileOpen
   const closeIfMobile = () => {
     if (isMobile) onClose()
+  }
+  const handleLogout = () => {
+    localStorage.removeItem('tick:user')
+    closeIfMobile()
+    navigate('/auth/login')
   }
   const visibleMainItems = mainItems.filter((item) => {
     if (item.to === '/semana' && !weekEnabled) return false
@@ -156,18 +161,21 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         </div>
 
         <div className="mt-2 shrink-0 border-t border-zinc-200/70 pt-2 dark:border-white/[0.06]">
-          {isMobile ? (
-            <NavRow
-              item={profileFooterItem}
-              onNavigate={closeIfMobile}
-              desktopHoverExpand={!isMobile}
-            />
-          ) : null}
           <NavRow
             item={footerItem}
             onNavigate={closeIfMobile}
             desktopHoverExpand={!isMobile}
           />
+          {isMobile ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-1 flex min-h-[2.75rem] w-full items-center gap-3 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-500/15 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300"
+            >
+              <LogOut className="h-[1.125rem] w-[1.125rem] shrink-0 stroke-[1.6]" aria-hidden />
+              <span>Deslogar</span>
+            </button>
+          ) : null}
         </div>
       </nav>
     </aside>

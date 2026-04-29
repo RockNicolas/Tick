@@ -10,7 +10,11 @@ import { type WishItem } from '../components/perfil/types'
 import { fetchGoals } from '../api/goals'
 import { fetchWishlist } from '../api/wishlist'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
-import { readWishlistEnabledForCurrentUser } from '../lib/tickSettings'
+import {
+  readProfileAchievementsEnabledForCurrentUser,
+  readProfileWishlistEnabledForCurrentUser,
+  readWishlistEnabledForCurrentUser,
+} from '../lib/tickSettings'
 import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
 
 const FIXED_GOAL_CATEGORIES = [
@@ -42,6 +46,14 @@ export default function PerfilPage() {
     () => readWishlistEnabledForCurrentUser(),
     [tickSettingsVersion, user?.id],
   )
+  const profileAchievementsEnabled = useMemo(
+    () => readProfileAchievementsEnabledForCurrentUser(),
+    [tickSettingsVersion, user?.id],
+  )
+  const profileWishlistEnabled = useMemo(
+    () => readProfileWishlistEnabledForCurrentUser(),
+    [tickSettingsVersion, user?.id],
+  )
   const userName = user?.name?.trim() ? user.name : 'Usuário Tick'
   const userEmail = user?.email ?? 'usuario@tick.app'
   const initials = getUserInitials(userName)
@@ -51,7 +63,7 @@ export default function PerfilPage() {
   const [wishItems, setWishItems] = useState<WishItem[]>([])
 
   useEffect(() => {
-    if (!wishlistEnabled) {
+    if (!wishlistEnabled || !profileWishlistEnabled) {
       setWishItems([])
       return
     }
@@ -78,7 +90,7 @@ export default function PerfilPage() {
     return () => {
       cancelled = true
     }
-  }, [wishlistEnabled])
+  }, [wishlistEnabled, profileWishlistEnabled])
 
   useEffect(() => {
     let cancelled = false
@@ -149,6 +161,11 @@ export default function PerfilPage() {
     () => (wishlistEnabled ? wishItems.filter((item) => item.done).length : 0),
     [wishItems, wishlistEnabled],
   )
+  const showAchievementsCard = profileAchievementsEnabled
+  const showWishlistCard = wishlistEnabled && profileWishlistEnabled
+  const profileGridClass = showWishlistCard
+    ? 'grid grid-cols-1 items-start gap-4 xl:grid-cols-[220px_minmax(0,1fr)_280px]'
+    : 'grid grid-cols-1 items-start gap-4 xl:grid-cols-[260px_minmax(0,1fr)]'
   const chartPercents = useMemo(() => {
     const fallback = [0, 0, 0, 0]
     if (monthlyCategoryStats.length < 4) return fallback
@@ -162,12 +179,14 @@ export default function PerfilPage() {
         <span>Perfil de usuário</span>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[220px_minmax(0,1fr)_280px]">
+      <div className={profileGridClass}>
         <div>
           <PerfilHeroCard initials={initials} userName={userName} userEmail={userEmail} />
-          <div className="pt-11">
-            <PerfilConquistasCard doneWishCount={doneWishCount} />
-          </div>
+          {showAchievementsCard ? (
+            <div className="pt-4 xl:pt-11">
+              <PerfilConquistasCard doneWishCount={doneWishCount} />
+            </div>
+          ) : null}
         </div>
         <div className="min-w-0">
           <PerfilPerformanceHubCard
@@ -179,7 +198,7 @@ export default function PerfilPage() {
           />
         </div>
 
-        {wishlistEnabled ? (
+        {showWishlistCard ? (
           <div className="min-w-0">
             <PerfilWishlistResumoCard wishItems={wishItems} />
           </div>

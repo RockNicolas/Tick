@@ -9,6 +9,8 @@ const KEYS = {
   weekEnabledPrefix: 'tick:settings:weekEnabled',
   goalsEnabledPrefix: 'tick:settings:goalsEnabled',
   waterGoalEnabledPrefix: 'tick:settings:waterGoalEnabled',
+  profileAchievementsEnabledPrefix: 'tick:settings:profileAchievementsEnabled',
+  profileWishlistEnabledPrefix: 'tick:settings:profileWishlistEnabled',
   notificationsPrefsPrefix: 'tick:settings:notificationsPrefs',
 } as const
 
@@ -173,6 +175,14 @@ function waterGoalEnabledKeyForUser(userId: string) {
   return `${KEYS.waterGoalEnabledPrefix}:${userId}`
 }
 
+function profileAchievementsEnabledKeyForUser(userId: string) {
+  return `${KEYS.profileAchievementsEnabledPrefix}:${userId}`
+}
+
+function profileWishlistEnabledKeyForUser(userId: string) {
+  return `${KEYS.profileWishlistEnabledPrefix}:${userId}`
+}
+
 /**
  * Controla se a lista de desejos fica ativa para o usuário logado.
  * Padrão: true (ativo).
@@ -226,4 +236,30 @@ export function writeWaterGoalEnabledForCurrentUser(value: boolean) {
   const user = readTickStoredUser()
   if (!user?.id) return
   writeBool(waterGoalEnabledKeyForUser(user.id), value)
+}
+
+/** Controla se o card de conquistas aparece na página de perfil para o usuário logado. */
+export function readProfileAchievementsEnabledForCurrentUser(): boolean {
+  const user = readTickStoredUser()
+  if (!user?.id) return true
+  return readBool(profileAchievementsEnabledKeyForUser(user.id), true)
+}
+
+export function writeProfileAchievementsEnabledForCurrentUser(value: boolean) {
+  const user = readTickStoredUser()
+  if (!user?.id) return
+  writeBool(profileAchievementsEnabledKeyForUser(user.id), value)
+}
+
+/** Controla se o card de wishlist aparece na página de perfil para o usuário logado. */
+export function readProfileWishlistEnabledForCurrentUser(): boolean {
+  const user = readTickStoredUser()
+  if (!user?.id) return true
+  return readBool(profileWishlistEnabledKeyForUser(user.id), true)
+}
+
+export function writeProfileWishlistEnabledForCurrentUser(value: boolean) {
+  const user = readTickStoredUser()
+  if (!user?.id) return
+  writeBool(profileWishlistEnabledKeyForUser(user.id), value)
 }

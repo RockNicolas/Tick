@@ -16,7 +16,7 @@ import {
   triggerNotificationEvent,
 } from '../lib/tickNotifications'
 import { useTickNotificationsVersion } from '../hooks/useTickNotifications'
-import { getUserInitials, readTickStoredUser, type TickStoredUser } from '../lib/tickUser'
+import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
 /*import WelcomeGreeting from './WelcomeGreeting'*/
 
 export default function AppShell() {
@@ -24,12 +24,12 @@ export default function AppShell() {
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false)
-  const mobileUser: TickStoredUser | null = readTickStoredUser()
   const notificationsRef = useRef<HTMLDivElement | null>(null)
   const isMobileLayout = useMediaQuery('(max-width: 767px)')
   useTickNotificationsVersion()
   const unreadCount = getUnreadTickNotificationCount()
   const notifications = listTickNotifications()
+  const mobileUser = readTickStoredUser()
 
   useEffect(() => {
     startTransition(() => {
@@ -181,16 +181,10 @@ export default function AppShell() {
                   type="button"
                   className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
                   aria-label="Perfil"
-                  onClick={() => {
-                    if (!mobileUser) {
-                      navigate('/auth/login')
-                      return
-                    }
-                    navigate('/perfil')
-                  }}
+                  onClick={() => navigate('/perfil')}
                 >
                   {mobileUser ? (
-                    <span className="grid h-8 w-8 place-items-center rounded-full border border-zinc-300/80 bg-zinc-100 text-xs font-semibold text-zinc-800 dark:border-white/15 dark:bg-white/10 dark:text-zinc-100">
+                    <span className="grid h-7 w-7 place-items-center rounded-full border border-zinc-300/80 bg-zinc-100 text-[10px] font-semibold text-zinc-800 dark:border-white/15 dark:bg-white/10 dark:text-zinc-100">
                       {getUserInitials(mobileUser.name || mobileUser.email)}
                     </span>
                   ) : (
