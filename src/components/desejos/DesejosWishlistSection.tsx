@@ -92,35 +92,7 @@ export default function DesejosWishlistSection({
   useEffect(() => {
     const linksToFetch = wishItems
       .map((item) => item.link.trim())
-      .filter((link) => link.length > 0 && !previewByLink[link])
-    if (linksToFetch.length === 0) return
-
-    let cancelled = false
-    ;(async () => {
-      for (const link of linksToFetch) {
-        try {
-          const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(link)}&screenshot=true&meta=false`)
-          if (!res.ok) continue
-          const data = (await res.json()) as {
-            data?: { image?: { url?: string }; screenshot?: { url?: string }; logo?: { url?: string } }
-          }
-          const previewUrl = data.data?.image?.url || data.data?.screenshot?.url || data.data?.logo?.url || ''
-          if (!previewUrl || cancelled) continue
-          setPreviewByLink((prev) => ({ ...prev, [link]: previewUrl }))
-        } catch {
-          // keep fallback icon
-        }
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [wishItems, previewByLink])
-
-  useEffect(() => {
-    const linksToFetch = wishItems
-      .map((item) => item.link.trim())
-      .filter((link) => link.length > 0 && (!logoByLink[link] || !priceByLink[link]))
+      .filter((link) => link.length > 0 && (!previewByLink[link] || !logoByLink[link] || !priceByLink[link]))
     if (linksToFetch.length === 0) return
 
     let cancelled = false
@@ -129,8 +101,11 @@ export default function DesejosWishlistSection({
         try {
           const res = await fetch(`/api/link-preview?url=${encodeURIComponent(link)}`)
           if (!res.ok) continue
-          const data = (await res.json()) as { logoUrl?: string; priceText?: string | null }
+          const data = (await res.json()) as { logoUrl?: string; priceText?: string | null; imageUrl?: string }
           if (cancelled) continue
+          if (data.imageUrl) {
+            setPreviewByLink((prev) => ({ ...prev, [link]: data.imageUrl as string }))
+          }
           if (data.logoUrl) {
             setLogoByLink((prev) => ({ ...prev, [link]: data.logoUrl as string }))
           }
@@ -145,7 +120,7 @@ export default function DesejosWishlistSection({
     return () => {
       cancelled = true
     }
-  }, [wishItems, logoByLink, priceByLink])
+  }, [wishItems, previewByLink, logoByLink, priceByLink])
 
   const filteredAndSorted = useMemo(() => {
     const filtered = wishItems.filter((item) => {

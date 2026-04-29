@@ -312,6 +312,118 @@ function normalizeHttpUrl(raw) {
   }
 }
 
+function isLikelyLogoUrl(raw) {
+  if (typeof raw !== 'string' || !raw.trim()) return true
+  const value = raw.toLowerCase()
+  return (
+    value.includes('favicon') ||
+    value.includes('apple-touch-icon') ||
+    value.includes('/logo') ||
+    value.includes('logo.') ||
+    value.includes('/icon') ||
+    value.includes('icon.') ||
+    value.includes('s2/favicons')
+  )
+}
+
+function decodeHtmlEntities(text) {
+  if (typeof text !== 'string' || !text) return ''
+  return text
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+}
+
+function absolutizeUrl(candidate, baseUrl) {
+  if (typeof candidate !== 'string') return ''
+  const value = decodeHtmlEntities(candidate).trim()
+  if (!value) return ''
+  try {
+    return new URL(value, baseUrl).toString()
+  } catch {
+    return ''
+  }
+}
+
+function extractMetaContent(html, names = []) {
+  if (typeof html !== 'string' || !html) return ''
+  for (const name of names) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const byProperty = new RegExp(
+      `<meta[^>]+property=["']${escaped}["'][^>]*content=["']([^"']+)["'][^>]*>`,
+      'i',
+    )
+    const byName = new RegExp(`<meta[^>]+name=["']${escaped}["'][^>]*content=["']([^"']+)["'][^>]*>`, 'i')
+    const inverseProperty = new RegExp(
+      `<meta[^>]+content=["']([^"']+)["'][^>]*property=["']${escaped}["'][^>]*>`,
+      'i',
+    )
+    const inverseName = new RegExp(
+      `<meta[^>]+content=["']([^"']+)["'][^>]*name=["']${escaped}["'][^>]*>`,
+      'i',
+    )
+    const match =
+      html.match(byProperty)?.[1] ||
+      html.match(byName)?.[1] ||
+      html.match(inverseProperty)?.[1] ||
+      html.match(inverseName)?.[1] ||
+      ''
+    if (match) return match
+  }
+  return ''
+}
+
+function extractJsonLdImage(html, baseUrl) {
+  if (typeof html !== 'string' || !html) return ''
+  const blocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
+  for (const block of blocks) {
+    const raw = block?.[1]
+    if (!raw) continue
+    try {
+      const parsed = JSON.parse(raw)
+      const candidates = Array.isArray(parsed) ? parsed : [parsed]
+      for (const node of candidates) {
+        const type = String(node?.['@type'] || '').toLowerCase()
+        if (!type.includes('product')) continue
+        const image = node?.image
+        const imageValue = Array.isArray(image) ? image[0] : image
+        const normalized = absolutizeUrl(String(imageValue || ''), baseUrl)
+        if (normalized && !isLikelyLogoUrl(normalized)) return normalized
+      }
+    } catch {
+      // ignore invalid json-ld block
+    }
+  }
+  return ''
+}
+
+function extractDomainImage(html, baseUrl) {
+  const host = new URL(baseUrl).hostname.replace(/^www\./i, '').toLowerCase()
+
+  if (host.includes('amazon.')) {
+    const hiRes =
+      html.match(/"hiRes"\s*:\s*"([^"]+)"/i)?.[1] ||
+      html.match(/"large"\s*:\s*"([^"]+)"/i)?.[1] ||
+      html.match(/"landingImageUrl"\s*:\s*"([^"]+)"/i)?.[1] ||
+      ''
+    const normalized = absolutizeUrl(hiRes.replace(/\\\//g, '/'), baseUrl)
+    if (normalized && !isLikelyLogoUrl(normalized)) return normalized
+  }
+
+  if (host.includes('kabum.')) {
+    const kabumImage =
+      extractMetaContent(html, ['og:image', 'twitter:image']) ||
+      html.match(/"image"\s*:\s*"([^"]+)"/i)?.[1] ||
+      ''
+    const normalized = absolutizeUrl(kabumImage.replace(/\\\//g, '/'), baseUrl)
+    if (normalized && !isLikelyLogoUrl(normalized)) return normalized
+  }
+
+  return ''
+}
+
 function extractPriceFromText(text) {
   if (typeof text !== 'string' || !text) return null
   const compact = text.replace(/\s+/g, ' ')
@@ -743,6 +855,8 @@ app.get('/api/link-preview', async (req, res) => {
 
   let logoUrl = ''
   let priceText = null
+  let imageUrl = ''
+  let pageHtml = ''
 
   try {
     const metaRes = await fetch(
@@ -751,6 +865,8 @@ app.get('/api/link-preview', async (req, res) => {
     if (metaRes.ok) {
       const meta = await metaRes.json()
       logoUrl = meta?.data?.logo?.url || ''
+      const metaImage = meta?.data?.image?.url || ''
+      if (metaImage && !isLikelyLogoUrl(metaImage)) imageUrl = metaImage
       priceText =
         extractPriceFromText(meta?.data?.description || '') ||
         extractPriceFromText(meta?.data?.title || '')
@@ -765,12 +881,28 @@ app.get('/api/link-preview', async (req, res) => {
         headers: { 'user-agent': 'Mozilla/5.0 TickBot/1.0' },
       })
       if (pageRes.ok) {
-        const html = await pageRes.text()
-        priceText = extractPriceFromText(html)
+        pageHtml = await pageRes.text()
+        if (!priceText) priceText = extractPriceFromText(pageHtml)
       }
     } catch {
       // no-op
     }
+  }
+
+  if (pageHtml && !imageUrl) {
+    const fromOg = absolutizeUrl(
+      extractMetaContent(pageHtml, ['og:image:secure_url', 'og:image', 'twitter:image']),
+      targetUrl,
+    )
+    if (fromOg && !isLikelyLogoUrl(fromOg)) imageUrl = fromOg
+  }
+
+  if (pageHtml && !imageUrl) {
+    imageUrl = extractJsonLdImage(pageHtml, targetUrl) || ''
+  }
+
+  if (pageHtml && !imageUrl) {
+    imageUrl = extractDomainImage(pageHtml, targetUrl) || ''
   }
 
   if (!priceText) {
@@ -796,7 +928,7 @@ app.get('/api/link-preview', async (req, res) => {
     if (!logoUrl) logoUrl = ''
   }
 
-  res.json({ logoUrl, priceText })
+  res.json({ logoUrl, priceText, imageUrl })
 })
 
 app.get('/api/hydration', async (req, res) => {
