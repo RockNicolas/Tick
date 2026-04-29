@@ -48,7 +48,7 @@ export default function DesejosWishlistSection({
 }: DesejosWishlistSectionProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState<'priority' | 'category' | 'recent'>('priority')
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'alta' | 'media' | 'baixa'>('all')
   const [previewByLink, setPreviewByLink] = useState<Record<string, string>>({})
   const [logoByLink, setLogoByLink] = useState<Record<string, string>>({})
   const [brokenLogoByLink, setBrokenLogoByLink] = useState<Record<string, boolean>>({})
@@ -125,24 +125,21 @@ export default function DesejosWishlistSection({
   const filteredAndSorted = useMemo(() => {
     const filtered = wishItems.filter((item) => {
       const q = searchTerm.trim().toLowerCase()
-      if (!q) return true
-      return item.title.toLowerCase().includes(q) || item.link.toLowerCase().includes(q)
+      const matchesSearch = !q || item.title.toLowerCase().includes(q) || item.link.toLowerCase().includes(q)
+      const matchesPriority = priorityFilter === 'all' || item.priority === priorityFilter
+      return matchesSearch && matchesPriority
     })
 
     const sorted = [...filtered]
-    if (sortBy === 'priority') {
-      sorted.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
-    } else if (sortBy === 'category') {
-      sorted.sort((a, b) => a.category.localeCompare(b.category, 'pt-BR'))
-    } else {
-      sorted.sort((a, b) => {
-        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
-        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
-        return tb - ta
-      })
-    }
+    sorted.sort((a, b) => {
+      const byPriority = priorityOrder[a.priority] - priorityOrder[b.priority]
+      if (byPriority !== 0) return byPriority
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return tb - ta
+    })
     return sorted
-  }, [wishItems, searchTerm, sortBy])
+  }, [wishItems, searchTerm, priorityFilter])
 
   const submitNewWish = () => {
     if (!newWishTitle.trim() || !newWishLink.trim()) return
@@ -193,18 +190,22 @@ export default function DesejosWishlistSection({
             className="w-full bg-transparent text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
           />
         </label>
-        <label className="inline-flex items-center gap-2 rounded-lg border border-zinc-300/70 bg-white/70 px-3 py-2 text-sm text-zinc-700 dark:border-white/10 dark:bg-black/20 dark:text-zinc-200">
-          <span>Ordenar por:</span>
-          <select
-            value={sortBy}
-            onChange={(event) => setSortBy(event.target.value as 'priority' | 'category' | 'recent')}
-            className="bg-transparent text-sm outline-none"
-          >
-            <option value="priority">Prioridade</option>
-            <option value="category">Categoria</option>
-            <option value="recent">Data adicionado</option>
-          </select>
-        </label>
+        <div className="inline-flex items-center gap-1 rounded-lg border border-zinc-300/70 bg-white/70 p-1 text-xs dark:border-white/10 dark:bg-black/20">
+          {(['all', 'alta', 'media', 'baixa'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setPriorityFilter(value)}
+              className={`rounded-md px-2.5 py-1.5 font-medium transition ${
+                priorityFilter === value
+                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                  : 'text-zinc-600 hover:bg-zinc-200/70 dark:text-zinc-300 dark:hover:bg-white/10'
+              }`}
+            >
+              {value === 'all' ? 'Todas prioridades' : value[0].toUpperCase() + value.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-2">
