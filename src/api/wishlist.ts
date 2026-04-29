@@ -2,6 +2,8 @@ export type WishItem = {
   id: string
   title: string
   link: string
+  category: string
+  priority: 'baixa' | 'media' | 'alta'
   done: boolean
   createdAt: string
   updatedAt: string
@@ -40,7 +42,12 @@ export async function fetchWishlist(): Promise<WishItem[]> {
   return data.items ?? []
 }
 
-export async function createWishItem(input: { title: string; link: string }): Promise<WishItem> {
+export async function createWishItem(input: {
+  title: string
+  link: string
+  category: string
+  priority: 'baixa' | 'media' | 'alta'
+}): Promise<WishItem> {
   const userId = requireLoggedUserId()
   const res = await fetch(`${API_PREFIX}/wishlist`, {
     method: 'POST',
@@ -57,6 +64,8 @@ export async function updateWishItem(
   input: {
     title?: string
     link?: string
+    category?: string
+    priority?: 'baixa' | 'media' | 'alta'
     done?: boolean
     sortOrder?: number
   },

@@ -16,6 +16,7 @@ model User {
   demands   DayDemand[]
   goals     Goal[]
   wishItems WishItem[]
+  hydrationEntries DailyHydration[]
 }
 
 model Item {
@@ -75,6 +76,8 @@ model WishItem {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   link      String
+  category  String   @default("geral")
+  priority  String   @default("media")
   done      Boolean  @default(false)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
@@ -82,4 +85,19 @@ model WishItem {
 
   @@index([userId, sortOrder])
   @@index([userId, done])
+  @@index([userId, priority])
+  @@index([userId, category])
+}
+
+model DailyHydration {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateKey   String
+  cups      Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dateKey])
+  @@index([userId, dateKey])
 }

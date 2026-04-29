@@ -49,7 +49,16 @@ export default function PerfilPage() {
       try {
         const items = await fetchWishlist()
         if (cancelled) return
-        setWishItems(items.map(({ id, title, link, done }) => ({ id, title, link, done })))
+        setWishItems(
+          items.map(({ id, title, link, category, priority, done }) => ({
+            id,
+            title,
+            link,
+            category: category || 'geral',
+            priority: priority || 'media',
+            done,
+          })),
+        )
       } catch {
         if (cancelled) return
         setWishItems([])

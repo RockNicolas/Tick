@@ -1,5 +1,6 @@
 import { Droplets, Minus, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { fetchHydrationForDate, upsertHydrationForDate } from '../../api/hydration'
 
 type MetasMilestonesColumnProps = {
   onAddClick: () => void
@@ -7,7 +8,6 @@ type MetasMilestonesColumnProps = {
 
 export default function MetasMilestonesColumn({ onAddClick }: MetasMilestonesColumnProps) {
   const waterTarget = 3
-  const waterStorageKey = 'tick:water-goal'
   const getLocalDateKey = () => {
     const now = new Date()
     const y = now.getFullYear()
@@ -17,30 +17,39 @@ export default function MetasMilestonesColumn({ onAddClick }: MetasMilestonesCol
   }
   const [todayKey, setTodayKey] = useState(() => getLocalDateKey())
   const [waterCups, setWaterCups] = useState(0)
+  const [hydrationLoaded, setHydrationLoaded] = useState(false)
   const isWaterTaskCompleted = waterCups >= waterTarget
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(waterStorageKey)
-      if (!raw) {
+    let cancelled = false
+    setHydrationLoaded(false)
+    ;(async () => {
+      try {
+        const cups = await fetchHydrationForDate(todayKey)
+        if (cancelled) return
+        setWaterCups(cups)
+      } catch {
+        if (cancelled) return
         setWaterCups(0)
-        return
+      } finally {
+        if (!cancelled) setHydrationLoaded(true)
       }
-      const parsed = JSON.parse(raw) as { date?: string; cups?: number }
-      if (parsed?.date !== todayKey) {
-        setWaterCups(0)
-        return
-      }
-      const cups = Number(parsed?.cups ?? 0)
-      if (Number.isFinite(cups)) setWaterCups(Math.max(0, Math.min(waterTarget, Math.round(cups))))
-    } catch {
-      setWaterCups(0)
+    })()
+    return () => {
+      cancelled = true
     }
   }, [todayKey, waterTarget])
 
   useEffect(() => {
-    localStorage.setItem(waterStorageKey, JSON.stringify({ date: todayKey, cups: waterCups }))
-  }, [todayKey, waterCups])
+    if (!hydrationLoaded) return
+    ;(async () => {
+      try {
+        await upsertHydrationForDate(todayKey, waterCups)
+      } catch {
+        // silently ignore persistence hiccups in this auxiliary widget
+      }
+    })()
+  }, [hydrationLoaded, todayKey, waterCups])
 
   useEffect(() => {
     const id = window.setInterval(() => {

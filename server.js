@@ -254,6 +254,8 @@ function serializeWishItem(item) {
     id: item.id,
     title: item.title,
     link: item.link,
+    category: item.category,
+    priority: item.priority,
     done: item.done,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
@@ -282,6 +284,48 @@ function normalizePriority(raw) {
   const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
   if (value === 'baixa' || value === 'importante') return value
   return 'media'
+}
+
+function normalizeWishPriority(raw) {
+  const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
+  if (value === 'baixa' || value === 'alta') return value
+  return 'media'
+}
+
+function normalizeDateKey(raw) {
+  if (typeof raw !== 'string') return ''
+  const value = raw.trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return ''
+  return value
+}
+
+function normalizeHttpUrl(raw) {
+  if (typeof raw !== 'string') return ''
+  const value = raw.trim()
+  if (!value) return ''
+  try {
+    const parsed = new URL(value)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return ''
+    return parsed.toString()
+  } catch {
+    return ''
+  }
+}
+
+function extractPriceFromText(text) {
+  if (typeof text !== 'string' || !text) return null
+  const compact = text.replace(/\s+/g, ' ')
+  const patterns = [
+    /R\$\s?\d{1,3}(?:\.\d{3})*,\d{2}/i,
+    /USD\s?\$?\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?/i,
+    /\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?/i,
+    /€\s?\d{1,3}(?:\.\d{3})*,\d{2}/i,
+  ]
+  for (const pattern of patterns) {
+    const match = compact.match(pattern)
+    if (match?.[0]) return match[0].trim()
+  }
+  return null
 }
 
 function colorFromPriority(priority) {
@@ -601,6 +645,8 @@ app.post('/api/wishlist', async (req, res) => {
 
   const title = typeof req.body?.title === 'string' ? req.body.title.trim() : ''
   const link = typeof req.body?.link === 'string' ? req.body.link.trim() : ''
+  const category = normalizeCategory(req.body?.category)
+  const priority = normalizeWishPriority(req.body?.priority)
   if (!title) return res.status(400).json({ error: 'titulo e obrigatorio' })
   if (!link) return res.status(400).json({ error: 'link e obrigatorio' })
 
@@ -615,6 +661,8 @@ app.post('/api/wishlist', async (req, res) => {
       userId,
       title,
       link,
+      category,
+      priority,
       done: false,
       sortOrder: (last?.sortOrder ?? -1) + 1,
     },
@@ -645,6 +693,12 @@ app.patch('/api/wishlist/:wishItemId', async (req, res) => {
     const link = req.body.link.trim()
     if (!link) return res.status(400).json({ error: 'link invalido' })
     data.link = link
+  }
+  if (typeof req.body?.category === 'string') {
+    data.category = normalizeCategory(req.body.category)
+  }
+  if (typeof req.body?.priority === 'string') {
+    data.priority = normalizeWishPriority(req.body.priority)
   }
   if (req.body?.done !== undefined) {
     data.done = Boolean(req.body.done)
@@ -681,6 +735,101 @@ app.delete('/api/wishlist/:wishItemId', async (req, res) => {
 
   await prisma.wishItem.delete({ where: { id: wishItemId } })
   res.json({ ok: true })
+})
+
+app.get('/api/link-preview', async (req, res) => {
+  const targetUrl = normalizeHttpUrl(req.query.url)
+  if (!targetUrl) return res.status(400).json({ error: 'url invalida' })
+
+  let logoUrl = ''
+  let priceText = null
+
+  try {
+    const metaRes = await fetch(
+      `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}&screenshot=false`,
+    )
+    if (metaRes.ok) {
+      const meta = await metaRes.json()
+      logoUrl = meta?.data?.logo?.url || ''
+      priceText =
+        extractPriceFromText(meta?.data?.description || '') ||
+        extractPriceFromText(meta?.data?.title || '')
+    }
+  } catch {
+    // no-op
+  }
+
+  if (!priceText) {
+    try {
+      const pageRes = await fetch(targetUrl, {
+        headers: { 'user-agent': 'Mozilla/5.0 TickBot/1.0' },
+      })
+      if (pageRes.ok) {
+        const html = await pageRes.text()
+        priceText = extractPriceFromText(html)
+      }
+    } catch {
+      // no-op
+    }
+  }
+
+  if (!priceText) {
+    try {
+      const mirrorRes = await fetch(`https://r.jina.ai/http://${targetUrl.replace(/^https?:\/\//, '')}`)
+      if (mirrorRes.ok) {
+        const mirrorText = await mirrorRes.text()
+        priceText = extractPriceFromText(mirrorText)
+      }
+    } catch {
+      // no-op
+    }
+  }
+
+  try {
+    const host = new URL(targetUrl).hostname
+    const cleanHost = host.replace(/^www\./i, '')
+    const horseIcon = `https://icon.horse/icon/${encodeURIComponent(cleanHost)}`
+    if (!logoUrl || /\.ico($|\?)/i.test(logoUrl)) {
+      logoUrl = horseIcon
+    }
+  } catch {
+    if (!logoUrl) logoUrl = ''
+  }
+
+  res.json({ logoUrl, priceText })
+})
+
+app.get('/api/hydration', async (req, res) => {
+  const userId = readUserId(req.query.userId)
+  if (!userId) return res.status(400).json({ error: 'userId is required' })
+  const dateKey = normalizeDateKey(req.query.dateKey)
+  if (!dateKey) return res.status(400).json({ error: 'dateKey invalido' })
+
+  const row = await prisma.dailyHydration.findUnique({
+    where: { userId_dateKey: { userId, dateKey } },
+    select: { cups: true },
+  })
+
+  res.json({ cups: row?.cups ?? 0 })
+})
+
+app.put('/api/hydration', async (req, res) => {
+  const userId = readUserId(req.body?.userId)
+  if (!userId) return res.status(400).json({ error: 'userId is required' })
+  const dateKey = normalizeDateKey(req.body?.dateKey)
+  if (!dateKey) return res.status(400).json({ error: 'dateKey invalido' })
+
+  const cupsRaw = Number(req.body?.cups)
+  if (!Number.isFinite(cupsRaw)) return res.status(400).json({ error: 'cups invalido' })
+  const cups = Math.max(0, Math.min(3, Math.round(cupsRaw)))
+
+  const row = await prisma.dailyHydration.upsert({
+    where: { userId_dateKey: { userId, dateKey } },
+    update: { cups },
+    create: { userId, dateKey, cups },
+  })
+
+  res.json({ cups: row.cups })
 })
 
 app.use((req, res) => {
