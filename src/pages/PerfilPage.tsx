@@ -7,9 +7,7 @@ import PerfilHeroCard from '../components/perfil/PerfilHeroCard'
 import PerfilPerformanceHubCard from '../components/perfil/PerfilPerformanceHubCard'
 import { type WishItem } from '../components/perfil/types'
 import PerfilWishlistMarcosCard from '../components/perfil/PerfilWishlistMarcosCard'
-import { fetchDayDemandsForMonth } from '../api/dayDemands'
 import { fetchGoals } from '../api/goals'
-import { categoryDisplayLabel } from '../lib/categoryOptions'
 import { getUserInitials, readTickStoredUser } from '../lib/tickUser'
 
 const FIXED_GOAL_CATEGORIES = [
@@ -97,35 +95,24 @@ export default function PerfilPage() {
             return { category: key, label, percent: avgPercent, color }
           }), 
         )
+        const goalsCount = activeGoals.length
+        const totalProgress = activeGoals.reduce((sum, goal) => sum + Math.max(0, Math.min(100, goal.progress)), 0)
+        setMonthlyCompletionRate(goalsCount > 0 ? Math.round(totalProgress / goalsCount) : 0)
 
-        const now = new Date()
-        const monthDemands = await fetchDayDemandsForMonth(now.getFullYear(), now.getMonth() + 1)
-        if (cancelled) return
-        let monthDone = 0
-        let monthTotal = 0
-        const monthDoneByCategory = new Map<string, number>()
-        for (const list of Object.values(monthDemands)) {
-          for (const demand of list) {
-            monthTotal += 1
-            if (!demand.done) continue
-            monthDone += 1
-            const key = (demand.category || 'geral').trim().toLowerCase() || 'geral'
-            monthDoneByCategory.set(key, (monthDoneByCategory.get(key) ?? 0) + 1)
-          }
-        }
-        setMonthlyCompletionRate(monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : 0)
-        if (monthDoneByCategory.size === 0) {
+        if (byCategory.size === 0) {
           setMonthlyFocus('sem foco definido')
         } else {
-          let monthTopCategory = 'geral'
-          let monthTopCount = -1
-          for (const [category, count] of monthDoneByCategory.entries()) {
-            if (count > monthTopCount) {
+          let monthTopCategory = 'outros'
+          let monthTopAvg = -1
+          for (const [category, aggregate] of byCategory.entries()) {
+            const avg = aggregate.goals > 0 ? aggregate.totalProgress / aggregate.goals : 0
+            if (avg > monthTopAvg) {
+              monthTopAvg = avg
               monthTopCategory = category
-              monthTopCount = count
             }
           }
-          setMonthlyFocus(categoryDisplayLabel(monthTopCategory).toLowerCase())
+          const topCategory = FIXED_GOAL_CATEGORIES.find((entry) => entry.key === monthTopCategory)
+          setMonthlyFocus(topCategory?.label.toLowerCase() ?? 'sem foco definido')
         }
       } catch {
         if (cancelled) return
