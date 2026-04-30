@@ -6,6 +6,7 @@ import { SITE_NAME } from '../constants/branding'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
 import {
   readAutoOpenTodayPanel,
+  readAchievementsEnabledForCurrentUser,
   readGoalsEnabledForCurrentUser,
   readNotificationPreferencesForCurrentUser,
   readProfileAchievementsEnabledForCurrentUser,
@@ -15,6 +16,7 @@ import {
   readWeekEnabledForCurrentUser,
   readWishlistEnabledForCurrentUser,
   writeAutoOpenTodayPanel,
+  writeAchievementsEnabledForCurrentUser,
   writeGoalsEnabledForCurrentUser,
   writeNotificationPreferencesForCurrentUser,
   writeProfileAchievementsEnabledForCurrentUser,
@@ -32,6 +34,7 @@ export default function ConfiguracoesPage() {
   const [showSeconds, setShowSeconds] = useState(() => readShowClockSeconds())
   const [weekEnabled, setWeekEnabled] = useState(() => readWeekEnabledForCurrentUser())
   const [goalsEnabled, setGoalsEnabled] = useState(() => readGoalsEnabledForCurrentUser())
+  const [achievementsEnabled, setAchievementsEnabled] = useState(() => readAchievementsEnabledForCurrentUser())
   const [waterGoalEnabled, setWaterGoalEnabled] = useState(() => readWaterGoalEnabledForCurrentUser())
   const [profileAchievementsEnabled, setProfileAchievementsEnabled] = useState(() =>
     readProfileAchievementsEnabledForCurrentUser(),
@@ -48,6 +51,7 @@ export default function ConfiguracoesPage() {
       setShowSeconds(readShowClockSeconds())
       setWeekEnabled(readWeekEnabledForCurrentUser())
       setGoalsEnabled(readGoalsEnabledForCurrentUser())
+      setAchievementsEnabled(readAchievementsEnabledForCurrentUser())
       setWaterGoalEnabled(readWaterGoalEnabledForCurrentUser())
       setProfileAchievementsEnabled(readProfileAchievementsEnabledForCurrentUser())
       setProfileWishlistEnabled(readProfileWishlistEnabledForCurrentUser())
@@ -126,6 +130,16 @@ export default function ConfiguracoesPage() {
                 },
                 waterRemindersEnabled: next ? true : false,
               })
+            }}
+          />
+          <SettingsToggleRow
+            id="toggle-achievements"
+            label="Usar módulo Conquistas"
+            description="Exibe ou oculta o módulo Conquistas no menu lateral para este usuário."
+            checked={achievementsEnabled}
+            onChange={(next) => {
+              writeAchievementsEnabledForCurrentUser(next)
+              setAchievementsEnabled(next)
             }}
           />
           <SettingsToggleRow

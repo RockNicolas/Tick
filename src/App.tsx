@@ -10,6 +10,7 @@ import MensalPage from './pages/MensalPage'
 import MetasPage from './pages/MetasPage'
 import PerfilPage from './pages/PerfilPage'
 import SemanaPage from './pages/SemanaPage'
+import { readAchievementsEnabledForCurrentUser } from './lib/tickSettings'
 import { readTickStoredUser } from './lib/tickUser'
 
 function RequireAuth() {
@@ -21,6 +22,11 @@ function RequireAuth() {
 function RedirectIfAuthenticated() {
   const user = readTickStoredUser()
   if (user) return <Navigate to="/" replace />
+  return <Outlet />
+}
+
+function RequireAchievementsEnabled() {
+  if (!readAchievementsEnabledForCurrentUser()) return <Navigate to="/" replace />
   return <Outlet />
 }
 
@@ -39,7 +45,9 @@ export default function App() {
             <Route path="/mensal" element={<MensalPage />} />
             <Route path="/semana" element={<SemanaPage />} />
             <Route path="/metas" element={<MetasPage />} />
-            <Route path="/conquistas" element={<ConquistasPage />} />
+            <Route element={<RequireAchievementsEnabled />}>
+              <Route path="/conquistas" element={<ConquistasPage />} />
+            </Route>
             <Route path="/desejos" element={<DesejosPage />} />
             <Route path="/perfil" element={<PerfilPage />} />
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />

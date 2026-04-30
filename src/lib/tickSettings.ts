@@ -8,6 +8,7 @@ const KEYS = {
   wishlistEnabledPrefix: 'tick:settings:wishlistEnabled',
   weekEnabledPrefix: 'tick:settings:weekEnabled',
   goalsEnabledPrefix: 'tick:settings:goalsEnabled',
+  achievementsEnabledPrefix: 'tick:settings:achievementsEnabled',
   waterGoalEnabledPrefix: 'tick:settings:waterGoalEnabled',
   profileAchievementsEnabledPrefix: 'tick:settings:profileAchievementsEnabled',
   profileWishlistEnabledPrefix: 'tick:settings:profileWishlistEnabled',
@@ -175,6 +176,10 @@ function waterGoalEnabledKeyForUser(userId: string) {
   return `${KEYS.waterGoalEnabledPrefix}:${userId}`
 }
 
+function achievementsEnabledKeyForUser(userId: string) {
+  return `${KEYS.achievementsEnabledPrefix}:${userId}`
+}
+
 function profileAchievementsEnabledKeyForUser(userId: string) {
   return `${KEYS.profileAchievementsEnabledPrefix}:${userId}`
 }
@@ -236,6 +241,19 @@ export function writeWaterGoalEnabledForCurrentUser(value: boolean) {
   const user = readTickStoredUser()
   if (!user?.id) return
   writeBool(waterGoalEnabledKeyForUser(user.id), value)
+}
+
+/** Controla se o módulo Conquistas fica ativo para o usuário logado. */
+export function readAchievementsEnabledForCurrentUser(): boolean {
+  const user = readTickStoredUser()
+  if (!user?.id) return true
+  return readBool(achievementsEnabledKeyForUser(user.id), true)
+}
+
+export function writeAchievementsEnabledForCurrentUser(value: boolean) {
+  const user = readTickStoredUser()
+  if (!user?.id) return
+  writeBool(achievementsEnabledKeyForUser(user.id), value)
 }
 
 /** Controla se o card de conquistas aparece na página de perfil para o usuário logado. */

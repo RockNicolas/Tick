@@ -4,6 +4,7 @@ import { SITE_LOGO_SRC, SITE_NAME } from '../constants/branding'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
 import {
+  readAchievementsEnabledForCurrentUser,
   readGoalsEnabledForCurrentUser,
   readWeekEnabledForCurrentUser,
   readWishlistEnabledForCurrentUser,
@@ -74,6 +75,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   useTickSettingsVersion()
   const weekEnabled = readWeekEnabledForCurrentUser()
   const goalsEnabled = readGoalsEnabledForCurrentUser()
+  const achievementsEnabled = readAchievementsEnabledForCurrentUser()
   const wishlistEnabled = readWishlistEnabledForCurrentUser()
   const drawerInert = isMobile && !mobileOpen
   const closeIfMobile = () => {
@@ -87,6 +89,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const visibleMainItems = mainItems.filter((item) => {
     if (item.to === '/semana' && !weekEnabled) return false
     if (item.to === '/metas' && !goalsEnabled) return false
+    if (item.to === '/conquistas' && !achievementsEnabled) return false
     if (item.to === '/desejos' && !wishlistEnabled) return false
     return true
   })
