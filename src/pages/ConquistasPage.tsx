@@ -129,8 +129,9 @@ export default function ConquistasPage() {
         setFinancePercent(0)
         setReadingPercent(0)
       } finally {
-        if (cancelled) return
-        setIsLoading(false)
+        if (!cancelled) {
+          setIsLoading(false)
+        }
       }
     })()
 

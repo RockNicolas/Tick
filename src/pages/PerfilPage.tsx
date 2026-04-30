@@ -42,19 +42,11 @@ function normalizeGoalCategory(raw: string) {
 
 export default function PerfilPage() {
   const tickSettingsVersion = useTickSettingsVersion()
-  const user = useMemo(() => readTickStoredUser(), [])
-  const wishlistEnabled = useMemo(
-    () => readWishlistEnabledForCurrentUser(),
-    [tickSettingsVersion, user?.id],
-  )
-  const profileAchievementsEnabled = useMemo(
-    () => readProfileAchievementsEnabledForCurrentUser(),
-    [tickSettingsVersion, user?.id],
-  )
-  const profileWishlistEnabled = useMemo(
-    () => readProfileWishlistEnabledForCurrentUser(),
-    [tickSettingsVersion, user?.id],
-  )
+  void tickSettingsVersion
+  const user = readTickStoredUser()
+  const wishlistEnabled = readWishlistEnabledForCurrentUser()
+  const profileAchievementsEnabled = readProfileAchievementsEnabledForCurrentUser()
+  const profileWishlistEnabled = readProfileWishlistEnabledForCurrentUser()
   const userName = user?.name?.trim() ? user.name : 'Usuário Tick'
   const userEmail = user?.email ?? 'usuario@tick.app'
   const initials = getUserInitials(userName)
@@ -66,12 +58,13 @@ export default function PerfilPage() {
   const [savedUnlockedMedalIds, setSavedUnlockedMedalIds] = useState<string[]>([])
 
   useEffect(() => {
-    if (!wishlistEnabled || !profileWishlistEnabled) {
-      setWishItems([])
-      return
-    }
     let cancelled = false
     ;(async () => {
+      if (!wishlistEnabled || !profileWishlistEnabled) {
+        if (cancelled) return
+        setWishItems([])
+        return
+      }
       try {
         const items = await fetchWishlist()
         if (cancelled) return

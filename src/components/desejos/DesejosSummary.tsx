@@ -3,5 +3,6 @@ type DesejosSummaryProps = {
 }
 
 export default function DesejosSummary({ doneWishCount: _doneWishCount }: DesejosSummaryProps) {
+  void _doneWishCount
   return null
 }

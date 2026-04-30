@@ -9,8 +9,8 @@ import { triggerNotificationEvent } from '../lib/tickNotifications'
 import { readWishlistEnabledForCurrentUser } from '../lib/tickSettings'
 
 export default function DesejosPage() {
-  const tickSettingsVersion = useTickSettingsVersion()
-  const wishlistEnabled = useMemo(() => readWishlistEnabledForCurrentUser(), [tickSettingsVersion])
+  useTickSettingsVersion()
+  const wishlistEnabled = readWishlistEnabledForCurrentUser()
   const [wishItems, setWishItems] = useState<WishItem[]>([])
   const [newWishTitle, setNewWishTitle] = useState('')
   const [newWishLink, setNewWishLink] = useState('')
@@ -19,13 +19,14 @@ export default function DesejosPage() {
   const [wishlistError, setWishlistError] = useState('')
 
   useEffect(() => {
-    if (!wishlistEnabled) {
-      setWishItems([])
-      setWishlistError('')
-      return
-    }
     let cancelled = false
     ;(async () => {
+      if (!wishlistEnabled) {
+        if (cancelled) return
+        setWishItems([])
+        setWishlistError('')
+        return
+      }
       try {
         const items = await fetchWishlist()
         if (cancelled) return

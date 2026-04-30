@@ -39,19 +39,22 @@ export function useMensalPage() {
   const queuedSaveRef = useRef<{ year: number; month: number; payload: DemandsByDate } | null>(null)
 
   const flushQueuedSave = useCallback(() => {
-    if (saveInFlightRef.current) return
-    const next = queuedSaveRef.current
-    if (!next) return
-    queuedSaveRef.current = null
-    saveInFlightRef.current = true
-    saveDayDemandsForMonth(next.year, next.month, next.payload)
-      .catch((error) => {
-        console.error('[Mensal] Falha ao salvar demandas no servidor:', error)
-      })
-      .finally(() => {
-        saveInFlightRef.current = false
-        if (queuedSaveRef.current) flushQueuedSave()
-      })
+    const processQueuedSave = () => {
+      if (saveInFlightRef.current) return
+      const next = queuedSaveRef.current
+      if (!next) return
+      queuedSaveRef.current = null
+      saveInFlightRef.current = true
+      saveDayDemandsForMonth(next.year, next.month, next.payload)
+        .catch((error) => {
+          console.error('[Mensal] Falha ao salvar demandas no servidor:', error)
+        })
+        .finally(() => {
+          saveInFlightRef.current = false
+          if (queuedSaveRef.current) processQueuedSave()
+        })
+    }
+    processQueuedSave()
   }, [])
 
   useEffect(() => {

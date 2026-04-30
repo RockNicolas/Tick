@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DAY_DEMANDS_UPDATED_EVENT } from '../api/dayDemands'
 import { createGoal, deleteGoal, fetchGoals, type Goal, type GoalStatus, updateGoal } from '../api/goals'
 import { triggerNotificationEvent } from '../lib/tickNotifications'
@@ -28,7 +28,7 @@ export function useMetasPage() {
     return goal
   }
 
-  async function loadGoals(tab: GoalStatus) {
+  const loadGoals = useCallback(async (tab: GoalStatus) => {
     setIsLoading(true)
     setError('')
     try {
@@ -44,7 +44,7 @@ export function useMetasPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   async function syncAutoCompletedGoals() {
     const allGoals = await fetchGoals()
@@ -78,7 +78,7 @@ export function useMetasPage() {
 
   useEffect(() => {
     void loadGoals(selectedTab)
-  }, [selectedTab])
+  }, [selectedTab, loadGoals])
 
   useEffect(() => {
     const onDemandsUpdated = () => {
@@ -96,15 +96,15 @@ export function useMetasPage() {
     }
     window.addEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated)
     return () => window.removeEventListener(DAY_DEMANDS_UPDATED_EVENT, onDemandsUpdated)
-  }, [selectedTab])
+  }, [selectedTab, loadGoals])
 
   useEffect(() => {
     void (async () => {
       try {
         const hasAutoCompletedGoal = await syncAutoCompletedGoals()
         if (hasAutoCompletedGoal) await notifyGoldGoalAchievementIfUnlocked()
-        if (hasAutoCompletedGoal && selectedTab === 'active') {
-          setSelectedTab('completed')
+        if (hasAutoCompletedGoal) {
+          setSelectedTab((previous) => (previous === 'active' ? 'completed' : previous))
         }
       } catch {
         // sem bloqueio de UI

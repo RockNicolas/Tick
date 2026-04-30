@@ -12,6 +12,12 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import type { WishItem } from '../perfil/types'
 
+const PRIORITY_ORDER: Record<'baixa' | 'media' | 'alta', number> = {
+  alta: 0,
+  media: 1,
+  baixa: 2,
+}
+
 type DesejosWishlistSectionProps = {
   wishItems: WishItem[]
   newWishTitle: string
@@ -58,12 +64,6 @@ export default function DesejosWishlistSection({
   const [editLink, setEditLink] = useState('')
   const [editCategory, setEditCategory] = useState('geral')
   const [editPriority, setEditPriority] = useState<'baixa' | 'media' | 'alta'>('media')
-
-  const priorityOrder: Record<'baixa' | 'media' | 'alta', number> = {
-    alta: 0,
-    media: 1,
-    baixa: 2,
-  }
 
   const resolveBrandLogo = (link: string) => {
     if (brokenLogoByLink[link]) return ''
@@ -132,7 +132,7 @@ export default function DesejosWishlistSection({
 
     const sorted = [...filtered]
     sorted.sort((a, b) => {
-      const byPriority = priorityOrder[a.priority] - priorityOrder[b.priority]
+      const byPriority = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
       if (byPriority !== 0) return byPriority
       const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
       const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
