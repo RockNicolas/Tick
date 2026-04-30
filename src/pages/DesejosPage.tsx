@@ -107,6 +107,12 @@ export default function DesejosPage() {
                   updatedAt: created.updatedAt,
                 },
               ])
+              triggerNotificationEvent('goal_progress_milestone', {
+                title: `Desejo adicionado: ${created.title}`,
+                body: 'Novo item adicionado na sua wishlist.',
+                dedupeKey: `wishlist_created:${created.id}`,
+                minIntervalMs: 30 * 60 * 1000,
+              })
               setNewWishTitle('')
               setNewWishLink('')
               setNewWishCategory('geral')
