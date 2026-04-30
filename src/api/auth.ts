@@ -8,7 +8,8 @@ type AuthResponse = {
   user: AuthUser
 }
 
-const API_PREFIX = '/api'
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+const API_PREFIX = `${API_BASE}/api`
 
 async function parseErrorMessage(res: Response, fallback: string) {
   try {

@@ -12,6 +12,9 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import type { WishItem } from '../perfil/types'
 
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+const API_PREFIX = `${API_BASE}/api`
+
 const PRIORITY_ORDER: Record<'baixa' | 'media' | 'alta', number> = {
   alta: 0,
   media: 1,
@@ -99,7 +102,7 @@ export default function DesejosWishlistSection({
     ;(async () => {
       for (const link of linksToFetch) {
         try {
-          const res = await fetch(`/api/link-preview?url=${encodeURIComponent(link)}`)
+          const res = await fetch(`${API_PREFIX}/link-preview?url=${encodeURIComponent(link)}`)
           if (!res.ok) continue
           const data = (await res.json()) as { logoUrl?: string; priceText?: string | null; imageUrl?: string }
           if (cancelled) continue

@@ -1,4 +1,5 @@
-const API_PREFIX = '/api'
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+const API_PREFIX = `${API_BASE}/api`
 
 function requireLoggedUserId() {
   const raw = localStorage.getItem('tick:user')
