@@ -153,10 +153,10 @@ export default function AppShell() {
           {isMobileLayout ? null : <DesktopTopBar />}
 
           {isMobileLayout ? (
-            <header className="fixed inset-x-0 top-0 z-30 flex min-h-[3.25rem] shrink-0 items-center justify-center border-b border-zinc-200/80 bg-white/90 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/[0.06] dark:bg-zinc-950/80">
+            <header className="fixed inset-x-0 top-0 z-30 flex min-h-[3.25rem] shrink-0 items-center justify-center border-b border-zinc-200/80 bg-white/90 px-[max(0.75rem,env(safe-area-inset-left))] py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/[0.06] dark:bg-zinc-950/80">
               <button
                 type="button"
-                className="absolute left-3 top-1/2 z-10 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-100/80 text-zinc-800 transition hover:bg-zinc-200/80 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10"
+                className="absolute left-[max(0.75rem,env(safe-area-inset-left))] top-1/2 z-10 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-100/80 text-zinc-800 transition hover:bg-zinc-200/80 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10"
                 aria-expanded={mobileNavOpen}
                 aria-controls="app-sidebar"
                 onClick={() => setMobileNavOpen((o) => !o)}
@@ -175,7 +175,7 @@ export default function AppShell() {
               <span className="sr-only">{SITE_NAME}</span>
               <div
                 ref={notificationsRef}
-                className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center justify-center gap-0.5"
+                className="absolute right-[max(0.5rem,env(safe-area-inset-right))] top-1/2 z-10 flex -translate-y-1/2 items-center justify-center gap-0.5"
               >
                 <ThemeToggleButton />
                 <button
@@ -243,7 +243,7 @@ export default function AppShell() {
           <div
             className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${
               isMobileLayout
-                ? 'px-3 pb-3 pt-[calc(3.25rem+0.75rem)] sm:px-4 sm:pb-4 sm:pt-[calc(3.25rem+1rem)]'
+                ? 'px-3 pb-3 pt-[calc(3.25rem+max(0.75rem,env(safe-area-inset-top)))] sm:px-4 sm:pb-4 sm:pt-[calc(3.25rem+max(1rem,env(safe-area-inset-top)))]'
                 : 'px-6 pb-6 pt-3 lg:px-8 lg:pb-8 lg:pt-4'
             }`}
           >
