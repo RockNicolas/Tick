@@ -56,13 +56,24 @@ export function useMetasPage() {
       }
       hasAutoCompletedGoal = true
       triggerNotificationEvent('goal_progress_milestone', {
-        title: `Meta concluida automaticamente: ${goal.title}`,
+        title: `Meta concluida: ${goal.title}`,
         body: 'Parabens! Sua meta foi concluida com base nas demandas finalizadas.',
         dedupeKey: `goal_progress_milestone:auto:${goal.id}`,
         minIntervalMs: 365 * 24 * 60 * 60 * 1000,
       })
     }
     return hasAutoCompletedGoal
+  }
+
+  async function notifyGoldGoalAchievementIfUnlocked() {
+    const completedGoals = await fetchGoals('completed')
+    if (completedGoals.length < 1) return
+    triggerNotificationEvent('goal_progress_milestone', {
+      title: 'Conquista desbloqueada: Meta de Ouro',
+      body: 'Voce concluiu sua primeira meta.',
+      dedupeKey: 'achievement:goal',
+      minIntervalMs: 365 * 24 * 60 * 60 * 1000,
+    })
   }
 
   useEffect(() => {
@@ -74,6 +85,7 @@ export function useMetasPage() {
       void (async () => {
         try {
           const hasAutoCompletedGoal = await syncAutoCompletedGoals()
+          if (hasAutoCompletedGoal) await notifyGoldGoalAchievementIfUnlocked()
           const nextTab: GoalStatus = hasAutoCompletedGoal ? 'completed' : selectedTab
           if (hasAutoCompletedGoal) setSelectedTab('completed')
           await loadGoals(nextTab)
@@ -90,6 +102,7 @@ export function useMetasPage() {
     void (async () => {
       try {
         const hasAutoCompletedGoal = await syncAutoCompletedGoals()
+        if (hasAutoCompletedGoal) await notifyGoldGoalAchievementIfUnlocked()
         if (hasAutoCompletedGoal && selectedTab === 'active') {
           setSelectedTab('completed')
         }
@@ -165,6 +178,7 @@ export function useMetasPage() {
         dedupeKey: `goal_progress_milestone:completed:${goal.id}`,
         minIntervalMs: 30 * 60 * 1000,
       })
+      await notifyGoldGoalAchievementIfUnlocked()
       setSelectedTab('completed')
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Falha ao concluir meta')
@@ -193,11 +207,12 @@ export function useMetasPage() {
       })
       if (updated.progress >= 100 || updated.status === 'completed') {
         triggerNotificationEvent('goal_progress_milestone', {
-          title: `Marco de progresso: ${updated.title}`,
-          body: 'Uma meta alcancou um marco importante.',
-          dedupeKey: `goal_progress_milestone:goal:${updated.id}:${updated.progress}`,
+          title: `Meta concluida: ${updated.title}`,
+          body: 'Parabens! Voce concluiu uma meta.',
+          dedupeKey: `goal_progress_milestone:completed:${updated.id}`,
           minIntervalMs: 30 * 60 * 1000,
         })
+        await notifyGoldGoalAchievementIfUnlocked()
       }
       setEditingGoal(null)
       await loadGoals(selectedTab)

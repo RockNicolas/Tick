@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Calendar, CalendarDays, Gift, Home, LogOut, Settings, Target, X } from 'lucide-react'
+import { Calendar, CalendarDays, Gift, Home, LogOut, Settings, Target, Trophy, X } from 'lucide-react'
 import { SITE_LOGO_SRC, SITE_NAME } from '../constants/branding'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
@@ -14,6 +14,7 @@ const mainItems = [
   { to: '/semana', label: 'Semana', icon: CalendarDays, end: false },
   { to: '/mensal', label: 'Mensal', icon: Calendar, end: false },
   { to: '/metas', label: 'Metas', icon: Target, end: false },
+  { to: '/conquistas', label: 'Conquistas', icon: Trophy, end: false },
   { to: '/desejos', label: 'Desejos', icon: Gift, end: false },
 ] as const
 

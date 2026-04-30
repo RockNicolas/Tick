@@ -36,10 +36,14 @@ export default function DesktopTopBar() {
     : notifications
 
   const getNotificationToneClass = (item: (typeof visibleNotifications)[number]) => {
+    const isAchievement = item.title.toLowerCase().startsWith('conquista desbloqueada:')
     const isPositive = item.eventId === 'goal_progress_milestone' || item.eventId === 'water_goal_completed'
     const isNegative = item.eventId === 'overdue_critical' || item.severity === 'critical'
 
     if (item.read) {
+      if (isAchievement) {
+        return 'border-transparent bg-transparent text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950/20'
+      }
       if (isPositive) {
         return 'border-transparent bg-transparent text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/20'
       }
@@ -49,6 +53,9 @@ export default function DesktopTopBar() {
       return 'border-transparent bg-transparent text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5'
     }
 
+    if (isAchievement) {
+      return 'border-amber-200/80 bg-amber-50/80 text-amber-900 hover:bg-amber-50 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-100 dark:hover:bg-amber-950/35'
+    }
     if (isPositive) {
       return 'border-emerald-200/80 bg-emerald-50/80 text-emerald-900 hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-100 dark:hover:bg-emerald-950/35'
     }

@@ -17,6 +17,7 @@ model User {
   goals     Goal[]
   wishItems WishItem[]
   hydrationEntries DailyHydration[]
+  achievements UserAchievement[]
 }
 
 model Item {
@@ -100,4 +101,15 @@ model DailyHydration {
 
   @@unique([userId, dateKey])
   @@index([userId, dateKey])
+}
+
+model UserAchievement {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medalId    String
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, medalId])
+  @@index([userId, unlockedAt])
 }

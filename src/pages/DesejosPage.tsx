@@ -5,6 +5,7 @@ import DesejosSummary from '../components/desejos/DesejosSummary'
 import DesejosWishlistSection from '../components/desejos/DesejosWishlistSection'
 import type { WishItem } from '../components/perfil/types'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
+import { triggerNotificationEvent } from '../lib/tickNotifications'
 import { readWishlistEnabledForCurrentUser } from '../lib/tickSettings'
 
 export default function DesejosPage() {
@@ -123,6 +124,33 @@ export default function DesejosPage() {
             ;(async () => {
               try {
                 await updateWishItem(id, { done: nextDone })
+                if (nextDone) {
+                  triggerNotificationEvent('goal_progress_milestone', {
+                    title: `Desejo concluido: ${target.title}`,
+                    body: 'Boa! Um item da sua wishlist foi concluido.',
+                    dedupeKey: `wishlist_done:${id}`,
+                    minIntervalMs: 30 * 60 * 1000,
+                  })
+
+                  const doneCountAfterToggle =
+                    prev.reduce((count, entry) => count + (entry.done ? 1 : 0), 0) + (target.done ? 0 : 1)
+                  if (doneCountAfterToggle >= 1) {
+                    triggerNotificationEvent('goal_progress_milestone', {
+                      title: 'Conquista desbloqueada: Primeiro Desejo',
+                      body: 'Voce concluiu seu primeiro item da wishlist.',
+                      dedupeKey: 'achievement:tag',
+                      minIntervalMs: 365 * 24 * 60 * 60 * 1000,
+                    })
+                  }
+                  if (doneCountAfterToggle >= 10) {
+                    triggerNotificationEvent('goal_progress_milestone', {
+                      title: 'Conquista desbloqueada: Colecionador',
+                      body: 'Voce concluiu 10 itens da wishlist.',
+                      dedupeKey: 'achievement:gem',
+                      minIntervalMs: 365 * 24 * 60 * 60 * 1000,
+                    })
+                  }
+                }
               } catch (error) {
                 setWishlistError(error instanceof Error ? error.message : 'Falha ao atualizar item')
                 setWishItems((rollback) =>

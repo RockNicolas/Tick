@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom
 import AppShell from './components/AppShell'
 import CadastroPage from './pages/CadastroPage'
 import ConfiguracoesPage from './pages/ConfiguracoesPage'
+import ConquistasPage from './pages/ConquistasPage'
 import DesejosPage from './pages/DesejosPage.tsx'
 import InicioPage from './pages/InicioPage'
 import LoginPage from './pages/LoginPage'
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/mensal" element={<MensalPage />} />
             <Route path="/semana" element={<SemanaPage />} />
             <Route path="/metas" element={<MetasPage />} />
+            <Route path="/conquistas" element={<ConquistasPage />} />
             <Route path="/desejos" element={<DesejosPage />} />
             <Route path="/perfil" element={<PerfilPage />} />
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />

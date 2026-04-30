@@ -9,6 +9,7 @@ import PerfilWishlistResumoCard from '../components/perfil/PerfilWishlistResumoC
 import { type WishItem } from '../components/perfil/types'
 import { fetchGoals } from '../api/goals'
 import { fetchWishlist } from '../api/wishlist'
+import { fetchUserAchievements, unlockAchievement } from '../api/achievements'
 import { useTickSettingsVersion } from '../hooks/useTickSettings'
 import {
   readProfileAchievementsEnabledForCurrentUser,
@@ -60,7 +61,9 @@ export default function PerfilPage() {
   const [monthlyCompletionRate, setMonthlyCompletionRate] = useState(0)
   const [monthlyFocus, setMonthlyFocus] = useState('sem foco definido')
   const [monthlyCategoryStats, setMonthlyCategoryStats] = useState<MonthlyCategoryStat[]>([])
+  const [completedGoalsCount, setCompletedGoalsCount] = useState(0)
   const [wishItems, setWishItems] = useState<WishItem[]>([])
+  const [savedUnlockedMedalIds, setSavedUnlockedMedalIds] = useState<string[]>([])
 
   useEffect(() => {
     if (!wishlistEnabled || !profileWishlistEnabled) {
@@ -98,6 +101,7 @@ export default function PerfilPage() {
     ;(async () => {
       try {
         const activeGoals = await fetchGoals('active')
+        const completedGoals = await fetchGoals('completed')
 
         if (cancelled) return
 
@@ -121,6 +125,7 @@ export default function PerfilPage() {
         const goalsCount = activeGoals.length
         const totalProgress = activeGoals.reduce((sum, goal) => sum + Math.max(0, Math.min(100, goal.progress)), 0)
         setMonthlyCompletionRate(goalsCount > 0 ? Math.round(totalProgress / goalsCount) : 0)
+        setCompletedGoalsCount(completedGoals.length)
 
         if (byCategory.size === 0) {
           setMonthlyFocus('sem foco definido')
@@ -141,6 +146,7 @@ export default function PerfilPage() {
         if (cancelled) return
         setMonthlyCompletionRate(0)
         setMonthlyFocus('sem foco definido')
+        setCompletedGoalsCount(0)
         setMonthlyCategoryStats(
           FIXED_GOAL_CATEGORIES.map(({ key, label, color }) => ({ category: key, label, percent: 0, color })),
         )
@@ -161,6 +167,54 @@ export default function PerfilPage() {
     () => (wishlistEnabled ? wishItems.filter((item) => item.done).length : 0),
     [wishItems, wishlistEnabled],
   )
+  const liveUnlockedMedalIds = useMemo(() => {
+    const byCategory = new Map(monthlyCategoryStats.map((entry) => [entry.category, entry.percent]))
+    const ids: string[] = []
+
+    if (completedGoalsCount >= 1) ids.push('goal')
+    if ((byCategory.get('fitness') ?? 0) >= 70) ids.push('fit')
+    if ((byCategory.get('financeiro') ?? 0) >= 70) ids.push('money')
+    if ((byCategory.get('ler') ?? 0) >= 70) ids.push('read')
+    if (doneWishCount >= 1) ids.push('tag')
+    if (doneWishCount >= 10) ids.push('gem')
+
+    return ids
+  }, [monthlyCategoryStats, doneWishCount, completedGoalsCount])
+  const unlockedMedalIds = useMemo(
+    () => [...new Set([...savedUnlockedMedalIds, ...liveUnlockedMedalIds])],
+    [savedUnlockedMedalIds, liveUnlockedMedalIds],
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const achievements = await fetchUserAchievements()
+        if (cancelled) return
+        setSavedUnlockedMedalIds(achievements.map((entry) => entry.medalId))
+      } catch {
+        if (cancelled) return
+        setSavedUnlockedMedalIds([])
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [tickSettingsVersion, user?.id])
+
+  useEffect(() => {
+    if (liveUnlockedMedalIds.length === 0) return
+    const missing = liveUnlockedMedalIds.filter((id) => !savedUnlockedMedalIds.includes(id))
+    if (missing.length === 0) return
+    ;(async () => {
+      try {
+        await Promise.all(missing.map((id) => unlockAchievement(id)))
+        setSavedUnlockedMedalIds((prev) => [...new Set([...prev, ...missing])])
+      } catch {
+        // nao bloqueia tela de perfil
+      }
+    })()
+  }, [liveUnlockedMedalIds, savedUnlockedMedalIds])
   const showAchievementsCard = profileAchievementsEnabled
   const showWishlistCard = wishlistEnabled && profileWishlistEnabled
   const profileGridClass = showWishlistCard
@@ -184,7 +238,7 @@ export default function PerfilPage() {
           <PerfilHeroCard initials={initials} userName={userName} userEmail={userEmail} />
           {showAchievementsCard ? (
             <div className="pt-4 xl:pt-11">
-              <PerfilConquistasCard doneWishCount={doneWishCount} />
+              <PerfilConquistasCard doneWishCount={doneWishCount} unlockedMedalIds={unlockedMedalIds} />
             </div>
           ) : null}
         </div>

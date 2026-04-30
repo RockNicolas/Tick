@@ -30,6 +30,13 @@ export default function AppShell() {
   const unreadCount = getUnreadTickNotificationCount()
   const notifications = listTickNotifications()
   const mobileUser = readTickStoredUser()
+  const getMobileNotificationToneClass = (title: string) => {
+    const isAchievement = title.toLowerCase().startsWith('conquista desbloqueada:')
+    if (isAchievement) {
+      return 'border-amber-200/80 bg-amber-50/80 text-amber-900 hover:bg-amber-50 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-100 dark:hover:bg-amber-950/35'
+    }
+    return 'border-zinc-200/70 bg-zinc-50/60 text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-100 dark:hover:bg-white/10'
+  }
 
   useEffect(() => {
     startTransition(() => {
@@ -86,9 +93,18 @@ export default function AppShell() {
             await updateGoal(goal.id, { status: 'completed', progress: 100 })
           }
           triggerNotificationEvent('goal_progress_milestone', {
-            title: `Meta concluida automaticamente: ${goal.title}`,
+            title: `Meta concluida: ${goal.title}`,
             body: 'Parabens! Sua meta foi concluida com base nas demandas finalizadas.',
             dedupeKey: `goal_progress_milestone:auto:${goal.id}`,
+            minIntervalMs: 365 * 24 * 60 * 60 * 1000,
+          })
+        }
+        const hasCompletedGoal = goals.some((goal) => goal.status === 'completed' || goal.progress >= 100)
+        if (hasCompletedGoal) {
+          triggerNotificationEvent('goal_progress_milestone', {
+            title: 'Conquista desbloqueada: Meta de Ouro',
+            body: 'Voce concluiu sua primeira meta.',
+            dedupeKey: 'achievement:goal',
             minIntervalMs: 365 * 24 * 60 * 60 * 1000,
           })
         }
@@ -207,7 +223,10 @@ export default function AppShell() {
                             type="button"
                             role="menuitem"
                             onClick={() => markTickNotificationAsRead(item.id)}
-                            className="block w-full rounded-lg border border-zinc-200/70 bg-zinc-50/60 px-3 py-2 text-left text-zinc-800 transition hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-100 dark:hover:bg-white/10"
+                            className={[
+                              'block w-full rounded-lg border px-3 py-2 text-left transition',
+                              getMobileNotificationToneClass(item.title),
+                            ].join(' ')}
                           >
                             <p className="text-sm font-medium">{item.title}</p>
                             <p className="mt-1 text-xs leading-relaxed">{item.body}</p>

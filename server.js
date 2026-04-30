@@ -262,6 +262,15 @@ function serializeWishItem(item) {
   }
 }
 
+function serializeAchievement(item) {
+  return {
+    id: item.id,
+    userId: item.userId,
+    medalId: item.medalId,
+    unlockedAt: item.unlockedAt,
+  }
+}
+
 function startOfToday() {
   const now = new Date()
   return new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -962,6 +971,34 @@ app.put('/api/hydration', async (req, res) => {
   })
 
   res.json({ cups: row.cups })
+})
+
+app.get('/api/achievements', async (req, res) => {
+  const userId = readUserId(req.query.userId)
+  if (!userId) return res.status(400).json({ error: 'userId is required' })
+
+  const achievements = await prisma.userAchievement.findMany({
+    where: { userId },
+    orderBy: [{ unlockedAt: 'asc' }],
+  })
+
+  res.json({ achievements: achievements.map(serializeAchievement) })
+})
+
+app.post('/api/achievements/unlock', async (req, res) => {
+  const userId = readUserId(req.body?.userId)
+  if (!userId) return res.status(400).json({ error: 'userId is required' })
+
+  const medalId = typeof req.body?.medalId === 'string' ? req.body.medalId.trim() : ''
+  if (!medalId) return res.status(400).json({ error: 'medalId is required' })
+
+  const achievement = await prisma.userAchievement.upsert({
+    where: { userId_medalId: { userId, medalId } },
+    update: {},
+    create: { userId, medalId },
+  })
+
+  res.status(201).json({ achievement: serializeAchievement(achievement) })
 })
 
 app.use((req, res) => {
