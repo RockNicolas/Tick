@@ -139,23 +139,12 @@ Projeto para uso pessoal.
 
 ## Capturas de tela
 
-### Login
-![Tela de login](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-4bc32a40-1135-4fb1-a921-9ea55bb6b3d0.png)
+As imagens abaixo estão em caminho local. Se não renderizarem no preview, clique nos links:
 
-### Cadastro
-![Tela de cadastro](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-b7f3e985-3f93-4fb3-b884-a0468bdae772.png)
-
-### Início
-![Tela inicial](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-9b813f57-1765-491c-a329-7cf19a361d62.png)
-
-### Semana
-![Tela semana](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-8ab681ad-d636-4b20-b2dd-7da353df4dec.png)
-
-### Mensal
-![Tela mensal](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-34861975-60c0-4969-9c92-ac8eb28a3709.png)
-
-### Metas
-![Tela metas](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-5955596b-de66-4302-a505-1fbc963fb1af.png)
-
-### Perfil
-![Tela perfil](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-c34232a5-92db-4646-af24-dbc25695b780.png)
+- [Login](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-4bc32a40-1135-4fb1-a921-9ea55bb6b3d0.png)
+- [Cadastro](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-b7f3e985-3f93-4fb3-b884-a0468bdae772.png)
+- [Início](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-9b813f57-1765-491c-a329-7cf19a361d62.png)
+- [Semana](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-8ab681ad-d636-4b20-b2dd-7da353df4dec.png)
+- [Mensal](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-34861975-60c0-4969-9c92-ac8eb28a3709.png)
+- [Metas](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-5955596b-de66-4302-a505-1fbc963fb1af.png)
+- [Perfil](file:///C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-c34232a5-92db-4646-af24-dbc25695b780.png)
