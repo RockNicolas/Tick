@@ -2,6 +2,10 @@
 
 Aplicativo web de agenda e produtividade pessoal com foco em organização de rotina, metas e conquistas.
 
+## Link do projeto
+
+- Produção: [https://tick-one.vercel.app/](https://tick-one.vercel.app/)
+
 ## Funcionalidades
 
 - Agenda mensal e semanal
@@ -133,29 +137,10 @@ node server.js
 - `GET /api/achievements`
 - `POST /api/achievements/unlock`
 
+## Criador e proprietário
+
+- **Nicolas Rock** (RockNicolas)
+
 ## Licença
 
 Projeto para uso pessoal.
-
-## Capturas de tela
-
-### Login
-![Tela de login](C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-4bc32a40-1135-4fb1-a921-9ea55bb6b3d0.png)
-
-### Cadastro
-![Tela de cadastro](C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-b7f3e985-3f93-4fb3-b884-a0468bdae772.png)
-
-### Início
-![Tela inicial](C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-9b813f57-1765-491c-a329-7cf19a361d62.png)
-
-### Semana
-![Tela semana](C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-8ab681ad-d636-4b20-b2dd-7da353df4dec.png)
-
-### Mensal
-![Tela mensal](C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-34861975-60c0-4969-9c92-ac8eb28a3709.png)
-
-### Metas
-![Tela metas](C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-5955596b-de66-4302-a505-1fbc963fb1af.png)
-
-### Perfil
-![Tela perfil](C:/Users/nicol/.cursor/projects/c-Users-nicol-OneDrive-rea-de-Trabalho-Tick/assets/c__Users_nicol_AppData_Roaming_Cursor_User_workspaceStorage_1f726825231c9c27214d80a96f683d4f_images_image-c34232a5-92db-4646-af24-dbc25695b780.png)
